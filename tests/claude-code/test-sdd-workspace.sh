@@ -164,6 +164,41 @@ PLAN
         echo "    brief6b: $(cat "$brief6b" 2>/dev/null)"
     fi
 
+    # Separate plan: uppercase letter suffix (avoids case-folding brief paths with 6b).
+    cat > "$repo/plan-letter-upper.md" <<'PLAN'
+# Letter Boundary Upper Plan
+
+## Task 8: Parent task
+
+Parent-upper-only body text.
+
+## Task 8B: Uppercase letter sibling
+
+Uppercase-sibling-only body text.
+PLAN
+    local letter_upper_dir brief8 brief8B
+    letter_upper_dir="$(cd "$repo" && "$SDD_SCRIPTS/sdd-workspace" plan-letter-upper.md)"
+    ( cd "$repo" && "$SDD_SCRIPTS/task-brief" plan-letter-upper.md 8 >/dev/null )
+    ( cd "$repo" && "$SDD_SCRIPTS/task-brief" plan-letter-upper.md 8B >/dev/null )
+    brief8="$letter_upper_dir/task-8-brief.md"
+    brief8B="$letter_upper_dir/task-8B-brief.md"
+    if grep -q "Parent-upper-only body text." "$brief8" 2>/dev/null \
+        && ! grep -q "Uppercase-sibling-only body text." "$brief8" 2>/dev/null \
+        && ! grep -q "Task 8B" "$brief8" 2>/dev/null; then
+        pass "task-brief for Task N excludes Task NB content"
+    else
+        fail "task-brief for Task N excludes Task NB content"
+        echo "    brief8: $(cat "$brief8" 2>/dev/null)"
+    fi
+    if grep -q "Uppercase-sibling-only body text." "$brief8B" 2>/dev/null \
+        && ! grep -q "Parent-upper-only body text." "$brief8B" 2>/dev/null \
+        && grep -q "Task 8B" "$brief8B" 2>/dev/null; then
+        pass "task-brief for Task NB returns only that task"
+    else
+        fail "task-brief for Task NB returns only that task"
+        echo "    brief8B: $(cat "$brief8B" 2>/dev/null)"
+    fi
+
     # --- review-package takes the plan first and lands in its directory ---
     local git_id=(-c user.email=t@example.com -c user.name=t -c commit.gpgsign=false)
     ( cd "$repo" \
