@@ -20,7 +20,10 @@ base=$3
 shift 4
 sdd="$(cd "$(dirname "$0")/../../subagent-driven-development/scripts" && pwd)"
 
-git rev-parse --verify --quiet "$base" >/dev/null || { echo "bad BASE: $base" >&2; exit 2; }
+git rev-parse --verify --quiet "$base" >/dev/null || {
+  echo "bad BASE: $base" >&2
+  exit 2
+}
 
 dir=$("$sdd/sdd-workspace" "$plan")
 log="$dir/task-${n}-tests.log"
@@ -37,7 +40,7 @@ done
 cmd=${cmd# }
 
 rc=0
-"$@" > "$log" 2>&1 || rc=$?
+"$@" >"$log" 2>&1 || rc=$?
 
 tail -n 5 "$log"
 if [ "$rc" -ne 0 ]; then
@@ -45,8 +48,28 @@ if [ "$rc" -ne 0 ]; then
   exit "$rc"
 fi
 
-last=$(grep -v '^[[:space:]]*$' "$log" | tail -n 1)
-[ -f "$ledger" ] || printf '# SDD ledger — plan: %s\n' "$plan" > "$ledger"
+# Prefer a TAP / node:test count line over the duration_ms trailer those
+# reporters emit last. Prefer pass, then fail, then tests (same shapes with or
+# without a leading "# " / non-ASCII reporter prefix). Fall back to the last
+# non-blank, non-duration line, then to exit status.
+counts=$(
+  sed -E 's/^[^A-Za-z0-9#]+//' "$log" \
+    | grep -E '^(# )?(pass|fail|tests) [0-9]+$' || true
+)
+last=$(printf '%s\n' "$counts" | grep -E '^(# )?pass [0-9]+$' | tail -n 1 || true)
+if [ -z "$last" ]; then
+  last=$(printf '%s\n' "$counts" | grep -E '^(# )?fail [0-9]+$' | tail -n 1 || true)
+fi
+if [ -z "$last" ]; then
+  last=$(printf '%s\n' "$counts" | grep -E '^(# )?tests [0-9]+$' | tail -n 1 || true)
+fi
+if [ -z "$last" ]; then
+  last=$(grep -v '^[[:space:]]*$' "$log" | grep -v 'duration_ms' | tail -n 1 || true)
+fi
+if [ -z "$last" ]; then
+  last="exit $rc"
+fi
+[ -f "$ledger" ] || printf '# SDD ledger — plan: %s\n' "$plan" >"$ledger"
 line="Task $n: complete (commits $(git rev-parse --short=7 "$base")..$(git rev-parse --short=7 HEAD), tests: $cmd → $last)"
-printf '%s\n' "$line" >> "$ledger"
+printf '%s\n' "$line" >>"$ledger"
 echo "ledger: $line"
