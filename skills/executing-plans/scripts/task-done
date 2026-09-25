@@ -48,15 +48,21 @@ if [ "$rc" -ne 0 ]; then
   exit "$rc"
 fi
 
-# Prefer a TAP / node:test count line (# pass N, # fail N, # tests N — or the
-# same words after a non-ASCII reporter prefix) over the duration_ms trailer
-# those reporters emit last. Fall back to the last non-blank, non-duration line,
-# then to exit status so the field always carries an outcome.
-last=$(
+# Prefer a TAP / node:test count line over the duration_ms trailer those
+# reporters emit last. Prefer pass, then fail, then tests (same shapes with or
+# without a leading "# " / non-ASCII reporter prefix). Fall back to the last
+# non-blank, non-duration line, then to exit status.
+counts=$(
   sed -E 's/^[^A-Za-z0-9#]+//' "$log" \
-    | grep -E '^(# )?(pass|fail|tests) [0-9]+$' \
-    | tail -n 1 || true
+    | grep -E '^(# )?(pass|fail|tests) [0-9]+$' || true
 )
+last=$(printf '%s\n' "$counts" | grep -E '^(# )?pass [0-9]+$' | tail -n 1 || true)
+if [ -z "$last" ]; then
+  last=$(printf '%s\n' "$counts" | grep -E '^(# )?fail [0-9]+$' | tail -n 1 || true)
+fi
+if [ -z "$last" ]; then
+  last=$(printf '%s\n' "$counts" | grep -E '^(# )?tests [0-9]+$' | tail -n 1 || true)
+fi
 if [ -z "$last" ]; then
   last=$(grep -v '^[[:space:]]*$' "$log" | grep -v 'duration_ms' | tail -n 1 || true)
 fi

@@ -140,12 +140,11 @@ JS
   local ledger_line
   ledger_line="$(grep '^Task 2: complete' "$ledger" || true)"
   if [[ "$rc" -eq 0 ]] \
-    && [[ "$ledger_line" == *"→"* ]] \
     && [[ "$ledger_line" != *duration_ms* ]] \
-    && [[ "$ledger_line" == *pass* || "$ledger_line" == *fail* || "$ledger_line" == *tests* ]]; then
-    pass "task-done ledger result for node --test is pass/fail, not duration_ms"
+    && [[ "$ledger_line" == *"→ # pass "* ]]; then
+    pass "task-done ledger result for node --test prefers # pass, not duration_ms"
   else
-    fail "task-done ledger result for node --test is pass/fail, not duration_ms"
+    fail "task-done ledger result for node --test prefers # pass, not duration_ms"
     echo "    rc: $rc"
     echo "    ledger_line: $ledger_line"
     echo "    out:"
