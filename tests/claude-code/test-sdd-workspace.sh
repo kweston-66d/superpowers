@@ -129,6 +129,41 @@ PLAN
         echo "    got: $brief_path"
     fi
 
+    # --- task-brief stops Task N before Task Nb (letter-suffixed sibling) ---
+    cat > "$repo/plan-letter.md" <<'PLAN'
+# Letter Boundary Plan
+
+## Task 6: Parent task
+
+Parent-only body text.
+
+## Task 6b: Letter sibling
+
+Sibling-only body text.
+PLAN
+    local letter_dir brief6 brief6b
+    letter_dir="$(cd "$repo" && "$SDD_SCRIPTS/sdd-workspace" plan-letter.md)"
+    ( cd "$repo" && "$SDD_SCRIPTS/task-brief" plan-letter.md 6 >/dev/null )
+    ( cd "$repo" && "$SDD_SCRIPTS/task-brief" plan-letter.md 6b >/dev/null )
+    brief6="$letter_dir/task-6-brief.md"
+    brief6b="$letter_dir/task-6b-brief.md"
+    if grep -q "Parent-only body text." "$brief6" 2>/dev/null \
+        && ! grep -q "Sibling-only body text." "$brief6" 2>/dev/null \
+        && ! grep -q "Task 6b" "$brief6" 2>/dev/null; then
+        pass "task-brief for Task N excludes Task Nb content"
+    else
+        fail "task-brief for Task N excludes Task Nb content"
+        echo "    brief6: $(cat "$brief6" 2>/dev/null)"
+    fi
+    if grep -q "Sibling-only body text." "$brief6b" 2>/dev/null \
+        && ! grep -q "Parent-only body text." "$brief6b" 2>/dev/null \
+        && grep -q "Task 6b" "$brief6b" 2>/dev/null; then
+        pass "task-brief for Task Nb returns only that task"
+    else
+        fail "task-brief for Task Nb returns only that task"
+        echo "    brief6b: $(cat "$brief6b" 2>/dev/null)"
+    fi
+
     # --- review-package takes the plan first and lands in its directory ---
     local git_id=(-c user.email=t@example.com -c user.name=t -c commit.gpgsign=false)
     ( cd "$repo" \
