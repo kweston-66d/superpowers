@@ -211,6 +211,41 @@ async function runTests() {
       assert(res.body.includes('data-choice="a"'), 'Fragment interactive elements intact');
     });
 
+    await test('wrapInFrame preserves $\' sequences in screen HTML', async () => {
+      // String.replace replacement strings treat $' as "text after the match".
+      // Screen HTML containing that sequence must round-trip as one contiguous
+      // substring when wrapInFrame inserts it; a replacement *string* splices
+      // the frame template's post-placeholder tail into the screen <script>,
+      // which then breaks helper injection at the first </body>.
+      const fragment = [
+        '<h2>Repro</h2>',
+        '<script>',
+        '(function () {',
+        "  var fmt = function (n) { return 'US$' + n.toFixed(2); };",
+        "  document.body.insertAdjacentHTML('beforeend', '<p>' + fmt(1234.5) + '</p>');",
+        '})();',
+        '</script>'
+      ].join('\n');
+      fs.writeFileSync(path.join(CONTENT_DIR, 'dollar-quote.html'), fragment);
+      await sleep(300);
+
+      const res = await fetch(`http://localhost:${TEST_PORT}/`);
+      assert.strictEqual(
+        res.body.includes(fragment),
+        true,
+        'Screen HTML containing $\' must appear contiguous and unmutated after wrapInFrame'
+      );
+      const currencyLiteral = "return 'US$' + n.toFixed(2)";
+      const screenScriptAt = res.body.indexOf(currencyLiteral);
+      assert.notStrictEqual(screenScriptAt, -1, 'Currency $\' literal must survive intact');
+      const firstBodyClose = res.body.indexOf('</body>');
+      assert(
+        firstBodyClose > screenScriptAt,
+        'First </body> must remain after screen script (not spliced into it)'
+      );
+      assert(res.body.includes('toggleSelect'), 'helper.js must still inject at real </body>');
+    });
+
     await test('serves newest file by mtime', async () => {
       fs.writeFileSync(path.join(CONTENT_DIR, 'older.html'), '<h2>Older</h2>');
       await sleep(100);
