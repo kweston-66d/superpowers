@@ -40,14 +40,6 @@ one-liners the index is generated from), **Declined** (settled — never re-prop
 - **Suggested fix:** <the rule to add/change, or "see review">
 -->
 
-### parallel-tickets-one-coordinator-each
-- **Observed:** 2026-09-25
-- **Agent/skill:** `.agents/skills/using-agentic-engineering/SKILL.md`, `.agents/skills/orchestrated-delivery/SKILL.md`, `.agents/agents/code-coordinator/agent.md`
-- **Scope:** upstream
-- **What went wrong:** Parent agent planned to spawn three `code-implementer` agents directly for three independent GitHub tickets, treating "never parallel tickets inside orchestrated-delivery" as "parent must not fan out ticket work."
-- **Root cause in instructions:** Routing says independent domains use `dispatching-parallel-agents` and "never parallel tickets inside orchestrated-delivery," and orchestrated-delivery lists parallel ticket execution as out of scope / "do not run parallel dispatches." Nowhere states the intended fan-out: for N independent tickets the parent spawns N `code-coordinator` agents (one ticket each); each coordinator runs the serial implement → (harden) → review loop alone. "No parallel" applies inside one coordinator's loop, not across coordinators.
-- **Suggested fix:** In `using-agentic-engineering` routing and `orchestrated-delivery` Constraints / Out of scope, state positively: multiple independent tickets → one `code-coordinator` per ticket (parallel OK at parent); a single coordinator never parallel-dispatches tickets. Update `code-coordinator` agent description from "serial ship" only to mention single-ticket ownership when spawned per ticket.
-
 ### gh-keyring-needs-unsandboxed-shell
 - **Observed:** 2026-09-25
 - **Agent/skill:** `.agents/skills/orchestrated-delivery/SKILL.md` (Pre-flight), `.agents/skills/implementing-a-ticket/SKILL.md`
@@ -79,6 +71,9 @@ one-liners the index is generated from), **Declined** (settled — never re-prop
 ### <slug> (<YYYY-MM-DD>)
 <one line: what landed and where>
 -->
+
+### parallel-tickets-one-coordinator-each (2026-09-26)
+Parent fans out one code-coordinator per independent ticket; a coordinator stays serial. Routing in using-agentic-engineering, orchestrated-delivery constraints/out-of-scope, and the code-coordinator agent.
 
 ## Declined
 

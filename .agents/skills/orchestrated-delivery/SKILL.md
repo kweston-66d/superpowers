@@ -460,7 +460,8 @@ user named one PR but not another), only merge the one named and ask about the r
   change.
 - You do not merge PRs **except** under Merge authorization above.
 - You do not re-open closed issues.
-- You do not run parallel dispatches.
+<!-- lesson: parallel-tickets-one-coordinator-each-2 -->
+- You do not run parallel dispatches inside this coordinator's loop. One ticket at a time here. A parent that has several independent tickets spawns one `code-coordinator` per ticket; those coordinators may run at the same time. What is never sufficient: treating "no parallel dispatches" as a ban on that parent fan-out, or spawning `code-implementer` yourself for a second ticket while this loop is live.
 - You do not fix a finding yourself, advisory ones included. You route it by disposition per
   review-gate.md §1f — `apply` goes to the implementer in this PR, `surface` goes to the user, `ticket` goes
   through the four-gate test at review-gate.md §1g — and an implementer does the editing in every case. The
@@ -469,7 +470,7 @@ user named one PR but not another), only merge the one named and ask about the r
 
 ## Out of scope — explicit non-goals
 
-- Parallel execution of independent tickets.
+- Parallel execution of tickets inside one coordinator. Independent tickets run as separate coordinators, one ticket each.
 - Full topological dependency graph (v1 has a soft `# Depends on` check; a future version
   could add cycle detection).
 - Retry with additional user context after `review-loop-exhausted`.

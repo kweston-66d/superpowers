@@ -5,3 +5,4 @@ Unanchored lessons are printed to stdout on generation, not silently kept.
 
 | slug | applied | targets | anchors | what landed |
 |---|---|---|---|---|
+| parallel-tickets-one-coordinator-each | 2026-09-26 | .agents/skills/orchestrated-delivery/SKILL.md, .agents/skills/using-agentic-engineering/SKILL.md | 2 | Parent fans out one code-coordinator per independent ticket; a coordinator stays serial. Routing in using-agentic-engineering, orchestrated-delivery constraints/out-of-scope, and the code-coordinator agent. |

@@ -30,9 +30,11 @@ thin aliases that load these skills — playbooks live only under `.agents/skill
 ## Routing
 
 - **High-level goal → GitHub tickets → serial PRs:** `orchestrated-delivery` (thin agent: `code-coordinator`).
+<!-- lesson: parallel-tickets-one-coordinator-each -->
+- **Several independent tickets at once:** spawn one `code-coordinator` per ticket. Each coordinator runs its own serial implement → (harden) → review loop.
 - **Single ticket already filed:** `implementing-a-ticket`.
 - **Plan tasks without GitHub Issues:** `subagent-driven-development` / `executing-plans`.
-- **Independent domains in parallel:** `dispatching-parallel-agents` (never parallel tickets inside orchestrated-delivery).
+- **Independent domains in parallel:** `dispatching-parallel-agents` for work that is not ticketed delivery. A parent must not spawn `code-implementer` agents directly for GitHub tickets, and one coordinator must not parallel-dispatch its own tickets.
 - **Merge-gating review of ticketed work:** `falsifying-review` (prefer over generic requesting-code-review).
 
 ## Available skills
