@@ -137,21 +137,21 @@ PLAN
         echo "    got: $brief_path"
     fi
 
-    local numbered_brief="$TEST_ROOT/task-6.md"
-    local suffixed_brief="$TEST_ROOT/task-6b.md"
-    (cd "$repo" && "$SDD_SCRIPTS/task-brief" plan-a.md 6 "$numbered_brief" >/dev/null)
-    (cd "$repo" && "$SDD_SCRIPTS/task-brief" plan-a.md 6b "$suffixed_brief" >/dev/null)
-    if grep -q "Numbered task requirement." "$numbered_brief" \
-        && ! grep -q "Suffixed task requirement." "$numbered_brief"; then
-        pass "numbered task brief stops before a suffixed sibling"
-    else
-        fail "numbered task brief stops before a suffixed sibling"
-    fi
-    if grep -q "Suffixed task requirement." "$suffixed_brief"; then
-        pass "suffixed task brief remains directly addressable"
-    else
-        fail "suffixed task brief remains directly addressable"
-    fi
+  local numbered_brief="$TEST_ROOT/task-6.md"
+  local suffixed_brief="$TEST_ROOT/task-6b.md"
+  (cd "$repo" && "$SDD_SCRIPTS/task-brief" plan-a.md 6 "$numbered_brief" >/dev/null)
+  (cd "$repo" && "$SDD_SCRIPTS/task-brief" plan-a.md 6b "$suffixed_brief" >/dev/null)
+  if grep -q "Numbered task requirement." "$numbered_brief" \
+    && ! grep -q "Suffixed task requirement." "$numbered_brief"; then
+    pass "numbered task brief stops before a suffixed sibling"
+  else
+    fail "numbered task brief stops before a suffixed sibling"
+  fi
+  if grep -q "Suffixed task requirement." "$suffixed_brief"; then
+    pass "suffixed task brief remains directly addressable"
+  else
+    fail "suffixed task brief remains directly addressable"
+  fi
 
     # --- review-package takes the plan first and lands in its directory ---
     local git_id=(-c user.email=t@example.com -c user.name=t -c commit.gpgsign=false)
