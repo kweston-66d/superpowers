@@ -211,6 +211,15 @@ async function runTests() {
       assert(res.body.includes('data-choice="a"'), 'Fragment interactive elements intact');
     });
 
+    await test('preserves replacement tokens in framed screen content', async () => {
+      const fragment = '<pre>tokens: $\' $$ $& $` $1 $<name></pre>';
+      fs.writeFileSync(path.join(CONTENT_DIR, 'replacement-tokens.html'), fragment);
+      await sleep(300);
+
+      const res = await fetch(`http://localhost:${TEST_PORT}/`);
+      assert(res.body.includes(fragment), 'Framed screen content should round-trip replacement tokens literally');
+    });
+
     await test('serves newest file by mtime', async () => {
       fs.writeFileSync(path.join(CONTENT_DIR, 'older.html'), '<h2>Older</h2>');
       await sleep(100);
