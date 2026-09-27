@@ -42,6 +42,14 @@ main() {
 ## Task 1: First thing
 
 Do the first thing.
+
+## Task 6: Numbered task
+
+Numbered task requirement.
+
+## Task 6b: Suffixed task
+
+Suffixed task requirement.
 PLAN
     cat > "$repo/plan-b.md" <<'PLAN'
 # Plan B
@@ -127,6 +135,22 @@ PLAN
     else
         fail "task-brief writes its brief under the plan's workspace"
         echo "    got: $brief_path"
+    fi
+
+    local numbered_brief="$TEST_ROOT/task-6.md"
+    local suffixed_brief="$TEST_ROOT/task-6b.md"
+    (cd "$repo" && "$SDD_SCRIPTS/task-brief" plan-a.md 6 "$numbered_brief" >/dev/null)
+    (cd "$repo" && "$SDD_SCRIPTS/task-brief" plan-a.md 6b "$suffixed_brief" >/dev/null)
+    if grep -q "Numbered task requirement." "$numbered_brief" \
+        && ! grep -q "Suffixed task requirement." "$numbered_brief"; then
+        pass "numbered task brief stops before a suffixed sibling"
+    else
+        fail "numbered task brief stops before a suffixed sibling"
+    fi
+    if grep -q "Suffixed task requirement." "$suffixed_brief"; then
+        pass "suffixed task brief remains directly addressable"
+    else
+        fail "suffixed task brief remains directly addressable"
     fi
 
     # --- review-package takes the plan first and lands in its directory ---
