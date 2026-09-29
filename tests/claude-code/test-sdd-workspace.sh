@@ -50,6 +50,17 @@ PLAN
 
 Do the other thing.
 PLAN
+    cat > "$repo/plan-suffixed.md" <<'PLAN'
+# Suffixed Tasks
+
+## Task 6: Numbered task
+
+Numbered-only requirement.
+
+## Task 6b: Suffixed task
+
+Suffixed-only requirement.
+PLAN
 
     # --- argument validation ---
     local rc=0
@@ -127,6 +138,22 @@ PLAN
     else
         fail "task-brief writes its brief under the plan's workspace"
         echo "    got: $brief_path"
+    fi
+
+    local numbered_brief="$TEST_ROOT/task-6.md"
+    local suffixed_brief="$TEST_ROOT/task-6b.md"
+    (cd "$repo" && "$SDD_SCRIPTS/task-brief" plan-suffixed.md 6 "$numbered_brief" >/dev/null)
+    (cd "$repo" && "$SDD_SCRIPTS/task-brief" plan-suffixed.md 6b "$suffixed_brief" >/dev/null)
+    if grep -q "Numbered-only requirement." "$numbered_brief" \
+        && ! grep -q "Suffixed-only requirement." "$numbered_brief"; then
+        pass "task-brief stops a numbered task before its suffixed sibling"
+    else
+        fail "task-brief stops a numbered task before its suffixed sibling"
+    fi
+    if grep -q "Suffixed-only requirement." "$suffixed_brief"; then
+        pass "task-brief directly selects a suffixed task"
+    else
+        fail "task-brief directly selects a suffixed task"
     fi
 
     # --- review-package takes the plan first and lands in its directory ---
