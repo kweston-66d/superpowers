@@ -112,4 +112,15 @@ Two entries the agents look for by name, if the project has them:
   of tickets. The coordinator states it in every dispatch and close-out, either way — or
   says none is defined.
 
-- *(none yet)*
+<!-- lesson: gh-keyring-needs-unsandboxed-shell -->
+- **macOS GitHub keyring access.** When `gh auth status`, a GitHub mutation, or `git push`
+  reports an invalid keyring token under the default Cursor sandbox, retry that command once
+  with unrestricted Shell permissions. Report `gh-not-authenticated` only if the unrestricted
+  retry also fails.
+
+<!-- lesson: parallel-tickets-shared-brainstorm-gate -->
+- **Brainstorm-server gate exclusivity.** `npm test --prefix tests/brainstorm-server` is not
+  parallel-safe across worktrees because it shares ports 3333/3334 and
+  `/tmp/brainstorm-test`. Run that gate only with exclusive access to those resources. If an
+  interrupted run leaves a server, identify its exact PID and confirm its command line names
+  the owning worktree before terminating it; never kill by process name.
