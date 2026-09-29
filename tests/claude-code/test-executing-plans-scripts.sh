@@ -119,10 +119,14 @@ JS
   rc=$?
   local tap_ledger_line
   tap_ledger_line="$(grep '^Task 2: complete' "$ledger" || true)"
-  if [[ "$rc" -eq 0 ]] && [[ "$tap_ledger_line" == *"→ # pass 1)" ]]; then
+  local tap_head expected_tap
+  tap_head="$(cd "$repo" && git rev-parse --short=7 HEAD)"
+  expected_tap="Task 2: complete (commits ${head:0:7}..${tap_head}, tests: node --test --test-reporter=tap sample.test.js → # pass 1)"
+  if [[ "$rc" -eq 0 ]] && [[ "$tap_ledger_line" == "$expected_tap" ]]; then
     pass "task-done records the Node TAP pass summary instead of duration metadata"
   else
     fail "task-done records the Node TAP pass summary instead of duration metadata"
+    echo "    expected: $expected_tap"
     echo "    ledger line: $tap_ledger_line"
     echo "    got: $out"
   fi
