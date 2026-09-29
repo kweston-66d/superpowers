@@ -31,11 +31,17 @@ thin aliases that load these skills — playbooks live only under `.agents/skill
 
 - **High-level goal → GitHub tickets → serial PRs:** `orchestrated-delivery` (thin agent: `code-coordinator`).
 <!-- lesson: parallel-tickets-one-coordinator-each -->
-- **Several independent tickets at once:** spawn one `code-coordinator` per ticket. Each coordinator runs its own serial implement → (harden) → review loop.
+- **Several existing tickets at once:** before dispatch, inspect dependencies. For every
+  independent ticket, spawn one `code-coordinator` per ticket in the same parallel tool
+  call; each coordinator runs its own serial implement → (harden) → review loop. Singular
+  wording such as "through the coordinator" never overrides this fan-out rule. Use one
+  shared coordinator only when dependencies require serial delivery.
 - **Single ticket already filed:** `implementing-a-ticket`.
 - **Plan tasks without GitHub Issues:** `subagent-driven-development` / `executing-plans`.
 - **Independent domains in parallel:** `dispatching-parallel-agents` for work that is not ticketed delivery. A parent must not spawn `code-implementer` agents directly for GitHub tickets, and one coordinator must not parallel-dispatch its own tickets.
 - **Merge-gating review of ticketed work:** `falsifying-review` (prefer over generic requesting-code-review).
+<!-- lesson: coordinator-stalls-before-reviewer-spawn -->
+- **Coordinator failure after implementation:** when a ticket PR and worktree are ready but two fresh `code-coordinator` attempts terminate before spawning `code-quality-reviewer`, the parent spawns that reviewer directly and resumes the review gate from its verdict. A coordinator status report, retry, or completed child with an unreviewed PR is never sufficient reason to leave the ticket waiting.
 
 ## Available skills
 

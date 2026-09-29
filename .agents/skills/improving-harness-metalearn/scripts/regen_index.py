@@ -26,7 +26,15 @@ ENTRY_RE = re.compile(r"^### ([a-z0-9-]+) \((\d{4}-\d{2}-\d{2})\)$")
 
 
 def _iter_instruction_files(root: Path):
-    for pattern in ("skills/**/*.md", "agents/*.md", "AGENTS.md", ".agents/skills/**/SKILL.md", ".agents/skills/**/procedures/*.md"):
+    for pattern in (
+        "skills/**/*.md",
+        "agents/*.md",
+        "AGENTS.md",
+        "CLAUDE.md",
+        "docs/agent_invariants.md",
+        ".agents/skills/**/SKILL.md",
+        ".agents/skills/**/procedures/*.md",
+    ):
         yield from sorted(root.glob(pattern))
 
 

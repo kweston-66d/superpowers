@@ -59,9 +59,12 @@ Only log a lesson that clears all four:
 4. **Not already Declined.** Check the Declined section first. A rejected lesson is settled.
 
 Before appending, grep **Pending** and `.agentic-engineering/lessons/INDEX.md` for the entry's target
-file and its root-cause nouns. A near-hit appends a dated addendum under the existing
-entry ("second instance: …") instead of a new entry — a repeat raises priority, it does
-not duplicate. `--check` on
+file and its root-cause nouns.
+<!-- lesson: repeat-addendum-preserves-applied-shape -->
+A near-hit in **Pending** gets a dated addendum instead of a new entry. If the matching
+lesson is already **Applied**, append the concise second-instance note to its single body
+line and regenerate `INDEX.md`; never add a second body line. A repeat raises priority; it
+does not duplicate. `--check` on
 `python3 .agents/skills/improving-harness-metalearn/scripts/regen_index.py` tests index
 freshness only — it does not answer did-it-land; grep the slug's anchor for that.
 
