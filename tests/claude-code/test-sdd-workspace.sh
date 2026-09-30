@@ -350,6 +350,49 @@ PLAN
         echo "    marker: $(cat "$dir_out/plan-path" 2>/dev/null)"
     fi
 
+    # --- a numbered task stops before its letter-suffixed sibling ---
+    cat > "$repo/suffixed.md" <<'PLAN'
+# Suffixed tasks
+
+### Task 6: Numbered work
+
+Numbered-only requirement.
+
+### Task 6b: Sibling work
+
+Sibling-only requirement.
+
+### Task 7: Later work
+
+Later-only requirement.
+PLAN
+    local brief6="$TEST_ROOT/task-6-brief.md"
+    local brief6b="$TEST_ROOT/task-6b-brief.md"
+    rc=0
+    (cd "$repo" && "$SDD_SCRIPTS/task-brief" suffixed.md 6 "$brief6" >/dev/null) || rc=$?
+    if [[ "$rc" -eq 0 ]] \
+        && grep -q "Numbered-only requirement." "$brief6" \
+        && ! grep -q "Sibling-only requirement." "$brief6"; then
+        pass "requesting Task 6 excludes Task 6b"
+    else
+        fail "requesting Task 6 excludes Task 6b"
+        echo "    rc: $rc"
+        echo "    brief: $(cat "$brief6" 2>/dev/null)"
+    fi
+
+    rc=0
+    (cd "$repo" && "$SDD_SCRIPTS/task-brief" suffixed.md 6b "$brief6b" >/dev/null) || rc=$?
+    if [[ "$rc" -eq 0 ]] \
+        && grep -q "Sibling-only requirement." "$brief6b" \
+        && ! grep -q "Numbered-only requirement." "$brief6b" \
+        && ! grep -q "Later-only requirement." "$brief6b"; then
+        pass "requesting Task 6b returns Task 6b"
+    else
+        fail "requesting Task 6b returns Task 6b"
+        echo "    rc: $rc"
+        echo "    brief: $(cat "$brief6b" 2>/dev/null)"
+    fi
+
     echo ""
     if [[ "$FAILURES" -ne 0 ]]; then
         echo "FAILED: $FAILURES assertion(s)."
