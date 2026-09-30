@@ -327,6 +327,13 @@ the skip is said in the gate evidence (§2.5) rather than left silent.
          timeout, and split across calls rather than raising the timeout by reflex. The
          per-iteration `cp` restore stays because it also carries the Restoration-rule
          verification.
+       <!-- lesson: mutation-probe-isolates-expected-failure -->
+       - **Run each expected-red mutant through
+         `.agents/skills/orchestrated-delivery/scripts/run-expected-failure.py`.** Supply explicit
+         `--timeout`, `--max-output-bytes`, and `--output` values, followed by `--` and the full
+         test command. Its JSON result and exit status distinguish an expected failure (0), a
+         surviving mutant (1), and a broken harness such as timeout or output overflow (2).
+         Never recreate its error-trap or redirection logic inline.
        - Record the mutation results with **raw counts**, because "verified" ages badly and a
          count can be re-run and compared. In the verdict comment that is one line inside the
          collapsed gate-evidence block — limbs and survivors, `9 limbs, 0 survivors` — never a
