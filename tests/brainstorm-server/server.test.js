@@ -211,6 +211,20 @@ async function runTests() {
       assert(res.body.includes('data-choice="a"'), 'Fragment interactive elements intact');
     });
 
+    await test('preserves replacement-string dollar tokens in framed screen HTML', async () => {
+      const screen = "<h2>Dollar screen</h2><p>$' $$ $& $` $1 $<named></p>";
+      fs.writeFileSync(path.join(CONTENT_DIR, 'dollar-screen.html'), screen);
+      await sleep(300);
+
+      const res = await fetch(`http://localhost:${TEST_PORT}/`);
+      assert(
+        res.body.includes(screen),
+        'framed screen HTML must keep replacement-string dollar tokens literal'
+      );
+      assert(res.body.includes('<div class="header">'), 'Fragment should still get header chrome');
+      assert(!res.body.includes('<!-- CONTENT -->'), 'Placeholder should be replaced');
+    });
+
     await test('serves newest file by mtime', async () => {
       fs.writeFileSync(path.join(CONTENT_DIR, 'older.html'), '<h2>Older</h2>');
       await sleep(100);
