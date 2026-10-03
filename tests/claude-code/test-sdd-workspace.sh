@@ -368,11 +368,23 @@ Later-only requirement.
 PLAN
     local brief6="$TEST_ROOT/task-6-brief.md"
     local brief6b="$TEST_ROOT/task-6b-brief.md"
+    local expected6="$TEST_ROOT/task-6-expected.md"
+    local expected6b="$TEST_ROOT/task-6b-expected.md"
+    cat > "$expected6" <<'EXPECTED'
+### Task 6: Numbered work
+
+Numbered-only requirement.
+
+EXPECTED
+    cat > "$expected6b" <<'EXPECTED'
+### Task 6b: Sibling work
+
+Sibling-only requirement.
+
+EXPECTED
     rc=0
     (cd "$repo" && "$SDD_SCRIPTS/task-brief" suffixed.md 6 "$brief6" >/dev/null) || rc=$?
-    if [[ "$rc" -eq 0 ]] \
-        && grep -q "Numbered-only requirement." "$brief6" \
-        && ! grep -q "Sibling-only requirement." "$brief6"; then
+    if [[ "$rc" -eq 0 ]] && cmp -s "$expected6" "$brief6"; then
         pass "requesting Task 6 excludes Task 6b"
     else
         fail "requesting Task 6 excludes Task 6b"
@@ -382,10 +394,7 @@ PLAN
 
     rc=0
     (cd "$repo" && "$SDD_SCRIPTS/task-brief" suffixed.md 6b "$brief6b" >/dev/null) || rc=$?
-    if [[ "$rc" -eq 0 ]] \
-        && grep -q "Sibling-only requirement." "$brief6b" \
-        && ! grep -q "Numbered-only requirement." "$brief6b" \
-        && ! grep -q "Later-only requirement." "$brief6b"; then
+    if [[ "$rc" -eq 0 ]] && cmp -s "$expected6b" "$brief6b"; then
         pass "requesting Task 6b returns Task 6b"
     else
         fail "requesting Task 6b returns Task 6b"
