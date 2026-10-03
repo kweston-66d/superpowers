@@ -129,6 +129,34 @@ PLAN
         echo "    got: $brief_path"
     fi
 
+    # --- Numbered tasks stop before letter-suffixed siblings ---
+    cat > "$repo/plan-suffixed.md" <<'PLAN'
+# Suffixed Plan
+
+## Task 6: Numbered task
+
+Numbered-only requirement text.
+
+## Task 6b: Suffixed task
+
+Suffixed-only requirement text.
+PLAN
+    local numbered_brief="$TEST_ROOT/task-6-brief.md"
+    local suffixed_brief="$TEST_ROOT/task-6b-brief.md"
+    (cd "$repo" && "$SDD_SCRIPTS/task-brief" plan-suffixed.md 6 "$numbered_brief" >/dev/null)
+    (cd "$repo" && "$SDD_SCRIPTS/task-brief" plan-suffixed.md 6b "$suffixed_brief" >/dev/null)
+    if grep -q "Numbered-only requirement text." "$numbered_brief" \
+        && ! grep -q "Suffixed-only requirement text." "$numbered_brief"; then
+        pass "numbered task brief excludes its letter-suffixed sibling"
+    else
+        fail "numbered task brief excludes its letter-suffixed sibling"
+    fi
+    if grep -q "Suffixed-only requirement text." "$suffixed_brief"; then
+        pass "letter-suffixed task remains directly addressable"
+    else
+        fail "letter-suffixed task remains directly addressable"
+    fi
+
     # --- review-package takes the plan first and lands in its directory ---
     local git_id=(-c user.email=t@example.com -c user.name=t -c commit.gpgsign=false)
     ( cd "$repo" \
