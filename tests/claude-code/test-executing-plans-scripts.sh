@@ -84,14 +84,14 @@ PLAN
   (cd "$repo" && echo x >work.txt && git add work.txt && git "${git_id[@]}" commit -qm "task 1")
   local head
   head="$(cd "$repo" && git rev-parse HEAD)"
-  out="$(cd "$repo" && "$EP_SCRIPTS/task-done" plan.md 1 "$base" -- sh -c 'echo "Ran 3 tests"; echo OK')"
+  out="$(cd "$repo" && "$EP_SCRIPTS/task-done" plan.md 1 "$base" -- sh -c 'printf "Ran 3 tests\nOK\n\n"')"
   rc=$?
   local ledger="$repo/.superpowers/sdd/plan/progress.md"
-  local expected="Task 1: complete (commits ${base:0:7}..${head:0:7}, tests: sh -c 'echo \"Ran 3 tests\"; echo OK' → OK)"
+  local expected="Task 1: complete (commits ${base:0:7}..${head:0:7}, tests: sh -c 'printf \"Ran 3 tests\\nOK\\n\\n\"' → OK)"
   if [[ -f "$ledger" ]] && grep -qF "$expected" "$ledger"; then
-    pass "task-done appends the completion line with commit range and test result"
+    pass "task-done records a generic runner's last nonblank line"
   else
-    fail "task-done appends the completion line with commit range and test result"
+    fail "task-done records a generic runner's last nonblank line"
     echo "    expected: $expected"
     echo "    ledger:"
     sed 's/^/      /' "$ledger" 2>/dev/null || echo "      (missing)"
@@ -122,18 +122,18 @@ PLAN
 
   # --- task-done: refuses to record a failing task ---
   rc=0
-  out="$(cd "$repo" && "$EP_SCRIPTS/task-done" plan.md 2 "$head" -- sh -c 'echo "FAILED (errors=1)"; exit 1' 2>&1)" || rc=$?
-  if [[ "$rc" -ne 0 ]]; then
-    pass "task-done exits non-zero when the test command fails"
+  out="$(cd "$repo" && "$EP_SCRIPTS/task-done" plan.md 2 "$head" -- sh -c 'printf "# pass 1\n# duration_ms 12.5\n"; exit 7' 2>&1)" || rc=$?
+  if [[ "$rc" -eq 7 ]]; then
+    pass "task-done preserves a failing test command's exit status"
   else
-    fail "task-done exits non-zero when the test command fails"
+    fail "task-done preserves a failing test command's exit status (got $rc)"
   fi
   if ! grep -q "Task 2: complete" "$ledger"; then
     pass "task-done does not record a failing task as complete"
   else
     fail "task-done does not record a failing task as complete"
   fi
-  if [[ "$out" == *"FAILED"* ]]; then
+  if [[ "$out" == *"# duration_ms 12.5"* ]]; then
     pass "task-done shows the failing output"
   else
     fail "task-done shows the failing output"
