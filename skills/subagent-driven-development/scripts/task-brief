@@ -16,10 +16,7 @@ fi
 
 plan=$1
 n=$2
-[ -f "$plan" ] || {
-  echo "no such plan file: $plan" >&2
-  exit 2
-}
+[ -f "$plan" ] || { echo "no such plan file: $plan" >&2; exit 2; }
 
 if [ $# -eq 3 ]; then
   out=$3
@@ -39,11 +36,11 @@ awk -v n="$n" '
     intask = (task == n)
   }
   intask { print }
-' "$plan" >"$out"
+' "$plan" > "$out"
 
 if [ ! -s "$out" ]; then
   echo "task ${n} not found in ${plan} (no heading matching 'Task ${n}')" >&2
   exit 3
 fi
 
-echo "wrote ${out}: $(wc -l <"$out" | tr -d ' ') lines"
+echo "wrote ${out}: $(wc -l < "$out" | tr -d ' ') lines"
