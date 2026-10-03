@@ -176,6 +176,24 @@ EOF
     sed 's/^/      /' "$ledger" 2>/dev/null || echo "      (missing)"
   fi
 
+  # --- task-done: non-TAP output keeps the last-nonblank fallback ---
+  cat >"$repo/non-tap.txt" <<'EOF'
+Running checks
+7 checks passed
+
+EOF
+  rc=0
+  out="$(cd "$repo" && "$EP_SCRIPTS/task-done" plan.md 5 "$head" -- cat non-tap.txt)" || rc=$?
+  if [[ "$rc" -eq 0 ]] && grep -qF "→ 7 checks passed" "$ledger"; then
+    pass "task-done records the last nonblank line for non-TAP output"
+  else
+    fail "task-done records the last nonblank line for non-TAP output"
+    echo "    rc: $rc"
+    echo "    got: $out"
+    echo "    ledger:"
+    sed 's/^/      /' "$ledger" 2>/dev/null || echo "      (missing)"
+  fi
+
   echo
   if [[ "$FAILURES" -eq 0 ]]; then
     echo "PASS"
