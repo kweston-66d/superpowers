@@ -212,7 +212,7 @@ async function runTests() {
     });
 
     await test('preserves replacement-string dollar tokens in framed screen HTML', async () => {
-      const screen = "<h2>Dollar screen</h2><p>$' $$ $& $` $1 $<named></p>";
+      const screen = "<h2>Dollar screen</h2><p>$' $$ $& $` $0 $01 $1 $2 $99 $<named> $<unterminated> $x $</p>";
       fs.writeFileSync(path.join(CONTENT_DIR, 'dollar-screen.html'), screen);
       await sleep(300);
 
