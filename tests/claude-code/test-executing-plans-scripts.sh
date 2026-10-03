@@ -125,16 +125,35 @@ PLAN
     fail "task-done prints the Node TAP pass summary in the ledger line"
     echo "    got: $out"
   fi
+  if ! grep -qF "→ # duration_ms 12.34)" "$ledger"; then
+    pass "task-done keeps trailing Node TAP duration out of the ledger result"
+  else
+    fail "task-done keeps trailing Node TAP duration out of the ledger result"
+    echo "    ledger:"
+    sed 's/^/      /' "$ledger"
+  fi
+
+  # --- task-done: falls back to the last nonblank generic result ---
+  out="$(cd "$repo" && "$EP_SCRIPTS/task-done" plan.md 3 "$head" -- sh -c 'printf "Ran 3 tests\nOK\n\n"')"
+  local fallback_expected="tests: sh -c 'printf \"Ran 3 tests\\nOK\\n\\n\"' → OK)"
+  if grep -qF "$fallback_expected" "$ledger"; then
+    pass "task-done records the last nonblank result when no TAP pass summary exists"
+  else
+    fail "task-done records the last nonblank result when no TAP pass summary exists"
+    echo "    expected: $fallback_expected"
+    echo "    ledger:"
+    sed 's/^/      /' "$ledger"
+  fi
 
   # --- task-done: refuses to record a failing task ---
   rc=0
-  out="$(cd "$repo" && "$EP_SCRIPTS/task-done" plan.md 3 "$head" -- sh -c 'echo "FAILED (errors=1)"; exit 1' 2>&1)" || rc=$?
+  out="$(cd "$repo" && "$EP_SCRIPTS/task-done" plan.md 4 "$head" -- sh -c 'echo "FAILED (errors=1)"; exit 1' 2>&1)" || rc=$?
   if [[ "$rc" -ne 0 ]]; then
     pass "task-done exits non-zero when the test command fails"
   else
     fail "task-done exits non-zero when the test command fails"
   fi
-  if ! grep -q "Task 3: complete" "$ledger"; then
+  if ! grep -q "Task 4: complete" "$ledger"; then
     pass "task-done does not record a failing task as complete"
   else
     fail "task-done does not record a failing task as complete"
