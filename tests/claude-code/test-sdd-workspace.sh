@@ -143,18 +143,32 @@ Suffixed-only requirement text.
 PLAN
     local numbered_brief="$TEST_ROOT/task-6-brief.md"
     local suffixed_brief="$TEST_ROOT/task-6b-brief.md"
+    local expected_numbered_brief="$TEST_ROOT/expected-task-6-brief.md"
+    local expected_suffixed_brief="$TEST_ROOT/expected-task-6b-brief.md"
+    cat > "$expected_numbered_brief" <<'EXPECTED'
+## Task 6: Numbered task
+
+Numbered-only requirement text.
+
+EXPECTED
+    cat > "$expected_suffixed_brief" <<'EXPECTED'
+## Task 6b: Suffixed task
+
+Suffixed-only requirement text.
+EXPECTED
     (cd "$repo" && "$SDD_SCRIPTS/task-brief" plan-suffixed.md 6 "$numbered_brief" >/dev/null)
     (cd "$repo" && "$SDD_SCRIPTS/task-brief" plan-suffixed.md 6b "$suffixed_brief" >/dev/null)
-    if grep -q "Numbered-only requirement text." "$numbered_brief" \
-        && ! grep -q "Suffixed-only requirement text." "$numbered_brief"; then
+    if cmp -s "$expected_numbered_brief" "$numbered_brief"; then
         pass "numbered task brief excludes its letter-suffixed sibling"
     else
         fail "numbered task brief excludes its letter-suffixed sibling"
+        diff -u "$expected_numbered_brief" "$numbered_brief" || true
     fi
-    if grep -q "Suffixed-only requirement text." "$suffixed_brief"; then
+    if cmp -s "$expected_suffixed_brief" "$suffixed_brief"; then
         pass "letter-suffixed task remains directly addressable"
     else
         fail "letter-suffixed task remains directly addressable"
+        diff -u "$expected_suffixed_brief" "$suffixed_brief" || true
     fi
 
     # --- review-package takes the plan first and lands in its directory ---
