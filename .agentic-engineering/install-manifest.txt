@@ -36,10 +36,6 @@ ad80e137e049ce2753bef6cec53b13d5	/Users/kyle/projects/superpowers/.agents/skills
 8d94fd0240cb50bf54ea6a64c28d9524	/Users/kyle/projects/superpowers/.agents/skills/improving-harness-metalearn/scripts/regen_index.py
 35d3c1ca32fc32a5648f307d5a67745e	/Users/kyle/projects/superpowers/.agents/skills/improving-harness-metalearn/SKILL.md
 45a036c80966f2af32c19d86bcc392c7	/Users/kyle/projects/superpowers/.agents/skills/improving-harness/SKILL.md
-c79f87aa9839ca50b2c178d44a835c25	/Users/kyle/projects/superpowers/.agents/skills/orchestrated-delivery/procedures/dispatch-handback.md
-73c78d158303596059cbc740161c4e27	/Users/kyle/projects/superpowers/.agents/skills/orchestrated-delivery/procedures/review-gate.md
-beb7132d410ac65a19a88f5883d7da78	/Users/kyle/projects/superpowers/.agents/skills/orchestrated-delivery/scripts/run-expected-failure.py
-e458a615cac950aafa0adbca3d794a63	/Users/kyle/projects/superpowers/.agents/skills/orchestrated-delivery/SKILL.md
 8864970ca2767362221d9a08275c4c1b	/Users/kyle/projects/superpowers/.agents/skills/prompt-decompose/SKILL.md
 d5e98df2942b30f8e40e2bd2cfa42b6e	/Users/kyle/projects/superpowers/.agents/skills/receiving-code-review/SKILL.md
 662af1cf554ea602575114f123323ba4	/Users/kyle/projects/superpowers/.agents/skills/recording-backlog/SKILL.md
@@ -53,3 +49,8 @@ f13f43fc16a1b26e8aa07f63971a8f40	/Users/kyle/projects/superpowers/.agents/skills
 1d8de66c7fb9c15028095420e0c50dc7	/Users/kyle/projects/superpowers/.agents/skills/verification-before-completion/SKILL.md
 c36727b79563d462e8113c3073e2bc81	/Users/kyle/projects/superpowers/.agents/skills/writing-plans/SKILL.md
 063c9ebe14cd69c6eb43545c5a5b0812	/Users/kyle/projects/superpowers/.git/hooks/pre-commit
+dd3bef33fad800e42159c7a8a3303202	/Users/kyle/projects/superpowers/.agents/skills/orchestrated-delivery/SKILL.md
+c79f87aa9839ca50b2c178d44a835c25	/Users/kyle/projects/superpowers/.agents/skills/orchestrated-delivery/procedures/dispatch-handback.md
+c3185429d1fe3a4f0d4011921910cc39	/Users/kyle/projects/superpowers/.agents/skills/orchestrated-delivery/procedures/evaluation-return.md
+1bdccc116086ba05394dfc311e4b890e	/Users/kyle/projects/superpowers/.agents/skills/orchestrated-delivery/procedures/review-gate.md
+beb7132d410ac65a19a88f5883d7da78	/Users/kyle/projects/superpowers/.agents/skills/orchestrated-delivery/scripts/run-expected-failure.py

@@ -191,7 +191,8 @@ you set `status:held`, comment saying what is held and what decision releases it
     `gh issue edit <n> --remove-label "status:in-progress" --add-label "status:blocked"`.
     Comment the reason — the implementer's blocker (`reason` / `missingInfo` / `suggestedNextStep` /
     `worktreePath`), or `review-loop-exhausted` with the last reviewer feedback and the
-    PR/worktree paths. **Stop and surface to the user.** Do not pick the next ticket.
+    PR/worktree paths. **Stop and surface to the user.** End that return with the evaluation
+    block in `.agents/skills/orchestrated-delivery/procedures/evaluation-return.md`. Do not pick the next ticket.
 
 ## Your turn ends when you return
 
@@ -212,6 +213,12 @@ and the PR/issue (`.agents/skills/orchestrated-delivery/procedures/dispatch-hand
 that leaves children live without naming them strands their hand-backs with nobody able to
 route them. Otherwise return only when the queue has no dep-ready ticket left, or a decision
 genuinely belongs to the user (step 11).
+
+**Every return to the parent ends with the evaluation block.** Before you return, Read
+`.agents/skills/orchestrated-delivery/procedures/evaluation-return.md` and append the block it
+specifies, including on a resume, a roster hand-back, a stop for merge consent, and step 11.
+Repeat every key whose value you already know. A return that stops at prose leaves the score
+unknown.
 
 ## User-directed scope changes
 
@@ -431,8 +438,10 @@ You **may** merge a PR yourself (`gh pr merge <prUrl>` with the `merge_strategy`
 
 If either condition is unmet — neither reviewer approval nor a user statement that they
 reviewed it, or no traceable user statement authorizing the merge — stop and surface the PR for
-manual merge, same as before. When in doubt about whether consent covers a specific PR (e.g. the
-user named one PR but not another), only merge the one named and ask about the rest.
+manual merge, same as before. That return ends with the evaluation block in
+`.agents/skills/orchestrated-delivery/procedures/evaluation-return.md`. When in doubt about
+whether consent covers a specific PR (e.g. the user named one PR but not another), only merge
+the one named and ask about the rest.
 
 ## What you do NOT do
 
@@ -460,7 +469,6 @@ user named one PR but not another), only merge the one named and ask about the r
   change.
 - You do not merge PRs **except** under Merge authorization above.
 - You do not re-open closed issues.
-<!-- lesson: parallel-tickets-one-coordinator-each-2 -->
 - You do not run parallel dispatches inside this coordinator's loop. One ticket at a time here. A parent that has several independent tickets spawns one `code-coordinator` per ticket; those coordinators may run at the same time. What is never sufficient: treating "no parallel dispatches" as a ban on that parent fan-out, or spawning `code-implementer` yourself for a second ticket while this loop is live.
 - You do not fix a finding yourself, advisory ones included. You route it by disposition per
   review-gate.md §1f — `apply` goes to the implementer in this PR, `surface` goes to the user, `ticket` goes
@@ -482,3 +490,7 @@ user named one PR but not another), only merge the one named and ask about the r
   — plus the coordinator's own mutation gate in review-gate.md §2.4. A fifth agent dedicated to
   domain validation is the next thing to try only if that combination proves insufficient in
   practice, not a default to reach for now.
+
+## Lesson anchors
+
+<!-- lesson: parallel-tickets-one-coordinator-each-2 -->

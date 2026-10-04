@@ -327,7 +327,6 @@ the skip is said in the gate evidence (§2.5) rather than left silent.
          timeout, and split across calls rather than raising the timeout by reflex. The
          per-iteration `cp` restore stays because it also carries the Restoration-rule
          verification.
-       <!-- lesson: mutation-probe-isolates-expected-failure -->
        - **Run each expected-red mutant through
          `.agents/skills/orchestrated-delivery/scripts/run-expected-failure.py`.** Supply explicit
          `--timeout`, `--max-output-bytes`, and `--output` values, followed by `--` and the full
@@ -474,3 +473,7 @@ Every reference out of this file names its file.
 5. Print: `✓ #<n> <title> — PR <prUrl> (reviewer approved in <N> iterations)`.
 6. **Loop back to the Delegation loop's step 2** in `code-coordinator.md` for the next
    ticket — in the same turn (code-coordinator.md, "Your turn ends when you return").
+
+## Lesson anchors
+
+<!-- lesson: mutation-probe-isolates-expected-failure -->
