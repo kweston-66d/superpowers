@@ -127,6 +127,23 @@ PLAN
         echo "    got: $out"
     fi
 
+    # --- task-done: Node TAP output records the pass summary, not the duration ---
+    # A passing node --test log ends on the duration line. The ledger result is
+    # the pass count over the test count, which is what a later reader can trust.
+    out="$(cd "$repo" && "$EP_SCRIPTS/task-done" plan.md 3 "$head" -- sh -c 'printf "TAP version 13\nok 1 - a\nok 2 - b\n1..4\n# tests 4\n# suites 0\n# pass 4\n# fail 0\n# duration_ms 52.464833\n"')"
+    if grep -q "Task 3: complete .* → 4/4 pass)" "$ledger"; then
+        pass "task-done records the TAP pass summary rather than the trailing duration line"
+    else
+        fail "task-done records the TAP pass summary rather than the trailing duration line"
+        echo "    ledger:"; sed 's/^/      /' "$ledger" 2>/dev/null || echo "      (missing)"
+    fi
+    if ! grep -o '→ [^)]*)$' "$ledger" | grep -q 'duration_ms'; then
+        pass "task-done keeps the duration line out of the ledger result"
+    else
+        fail "task-done keeps the duration line out of the ledger result"
+        echo "    ledger:"; sed 's/^/      /' "$ledger" 2>/dev/null || echo "      (missing)"
+    fi
+
     echo
     if [[ "$FAILURES" -eq 0 ]]; then
         echo "PASS"
