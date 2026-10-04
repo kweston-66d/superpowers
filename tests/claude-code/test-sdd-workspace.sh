@@ -350,6 +350,49 @@ PLAN
         echo "    marker: $(cat "$dir_out/plan-path" 2>/dev/null)"
     fi
 
+    # --- a numbered task stops before a letter-suffixed sibling ---
+    cat > "$repo/suffixed.md" <<'PLAN'
+# Suffixed
+
+## Task 6: Numbered task
+
+Only the numbered task.
+
+## Task 6b: Suffixed sibling
+
+Only the suffixed sibling.
+
+## Task 7: Following task
+
+Only the following task.
+PLAN
+
+    local suffixed_dir brief6 brief6b
+    suffixed_dir="$(cd "$repo" && "$SDD_SCRIPTS/sdd-workspace" suffixed.md)"
+    ( cd "$repo" && "$SDD_SCRIPTS/task-brief" suffixed.md 6 >/dev/null )
+    brief6="$suffixed_dir/task-6-brief.md"
+    if grep -q "Only the numbered task." "$brief6" \
+        && ! grep -q "Only the suffixed sibling." "$brief6" \
+        && ! grep -q "Task 6b" "$brief6" \
+        && ! grep -q "Only the following task." "$brief6"; then
+        pass "requesting task 6 excludes the letter-suffixed sibling"
+    else
+        fail "requesting task 6 excludes the letter-suffixed sibling"
+        echo "    brief: $(cat "$brief6" 2>/dev/null)"
+    fi
+
+    ( cd "$repo" && "$SDD_SCRIPTS/task-brief" suffixed.md 6b >/dev/null )
+    brief6b="$suffixed_dir/task-6b-brief.md"
+    if grep -q "Only the suffixed sibling." "$brief6b" \
+        && grep -q "Task 6b" "$brief6b" \
+        && ! grep -q "Only the numbered task." "$brief6b" \
+        && ! grep -q "Only the following task." "$brief6b"; then
+        pass "requesting task 6b returns that sibling"
+    else
+        fail "requesting task 6b returns that sibling"
+        echo "    brief: $(cat "$brief6b" 2>/dev/null)"
+    fi
+
     echo ""
     if [[ "$FAILURES" -ne 0 ]]; then
         echo "FAILED: $FAILURES assertion(s)."
