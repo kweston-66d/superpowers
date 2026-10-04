@@ -137,10 +137,39 @@ PLAN
         fail "task-done records the TAP pass summary rather than the trailing duration line"
         echo "    ledger:"; sed 's/^/      /' "$ledger" 2>/dev/null || echo "      (missing)"
     fi
+
+    # Different totals, and a pass count that is not the test count, are the
+    # fractions a later reader has to be able to trust from that log.
+    out="$(cd "$repo" && "$EP_SCRIPTS/task-done" plan.md 4 "$head" -- sh -c 'printf "TAP version 13\nok 1 - a\nok 2 - b\n1..2\n# tests 10\n# suites 0\n# pass 10\n# fail 0\n# duration_ms 3.5\n"')"
+    if grep -q "Task 4: complete .* → 10/10 pass)" "$ledger"; then
+        pass "task-done records a ten-of-ten TAP summary from that log"
+    else
+        fail "task-done records a ten-of-ten TAP summary from that log"
+        echo "    ledger:"; sed 's/^/      /' "$ledger" 2>/dev/null || echo "      (missing)"
+    fi
+
+    out="$(cd "$repo" && "$EP_SCRIPTS/task-done" plan.md 5 "$head" -- sh -c 'printf "TAP version 13\nok 1 - a\nnot ok 2 - b\n1..2\n# tests 9\n# suites 2\n# pass 6\n# fail 3\n# duration_ms 8.25\n"')"
+    if grep -q "Task 5: complete .* → 6/9 pass)" "$ledger"; then
+        pass "task-done records TAP pass and test counts when they differ"
+    else
+        fail "task-done records TAP pass and test counts when they differ"
+        echo "    ledger:"; sed 's/^/      /' "$ledger" 2>/dev/null || echo "      (missing)"
+    fi
+
     if ! grep -o '→ [^)]*)$' "$ledger" | grep -q 'duration_ms'; then
         pass "task-done keeps the duration line out of the ledger result"
     else
         fail "task-done keeps the duration line out of the ledger result"
+        echo "    ledger:"; sed 's/^/      /' "$ledger" 2>/dev/null || echo "      (missing)"
+    fi
+
+    # A tests line without a pass line is not a pass/fail summary. The ledger
+    # keeps the last non-blank output line.
+    out="$(cd "$repo" && "$EP_SCRIPTS/task-done" plan.md 6 "$head" -- sh -c 'printf "TAP version 13\n1..4\n# tests 4\n# duration_ms 52.464833\n"')"
+    if grep -q "Task 6: complete .* → # duration_ms 52.464833)" "$ledger"; then
+        pass "task-done keeps the last output line when the TAP pass count is absent"
+    else
+        fail "task-done keeps the last output line when the TAP pass count is absent"
         echo "    ledger:"; sed 's/^/      /' "$ledger" 2>/dev/null || echo "      (missing)"
     fi
 
