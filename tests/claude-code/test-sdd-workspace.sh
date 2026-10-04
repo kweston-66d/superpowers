@@ -23,6 +23,35 @@ cleanup() {
     fi
 }
 
+# The brief file must be exactly the task section. A substring check stays
+# green when a later sibling is copied in beside the line that was asserted.
+# outfile is chosen by the caller so ids that differ only by case cannot
+# share one path on a case-insensitive filesystem.
+assert_exact_brief() {
+    local label=$1
+    local repo_dir=$2
+    local plan=$3
+    local task_id=$4
+    local outfile=$5
+    local expected=$6
+    local rc=0
+    local brief_err=""
+
+    brief_err="$(
+        cd "$repo_dir" && "$SDD_SCRIPTS/task-brief" "$plan" "$task_id" "$outfile" 2>&1 >/dev/null
+    )" || rc=$?
+    if [[ "$rc" -eq 0 ]] && cmp -s "$outfile" "$expected"; then
+        pass "$label"
+    else
+        fail "$label"
+        echo "    exit: $rc"
+        if [[ -n "$brief_err" ]]; then
+            echo "    stderr: $brief_err"
+        fi
+        echo "    brief: $(cat "$outfile" 2>/dev/null)"
+    fi
+}
+
 main() {
     echo "=== Test: sdd-workspace ==="
 
@@ -349,6 +378,128 @@ PLAN
         echo "    dir:    $dir_out"
         echo "    marker: $(cat "$dir_out/plan-path" 2>/dev/null)"
     fi
+
+    # --- numbered and suffixed task ids extract as separate sections ---
+    # Task 6's heading ends at the id, so the end anchor is part of the match.
+    # A fenced "Task 6b" and a lowercase "task 6b" stay inside Task 6; real
+    # siblings (any letter, either case, a deeper heading, a longer number)
+    # do not. Task 6c's heading ends with a space, not a colon.
+    cat > "$repo/suffixed.md" <<'PLAN'
+# Suffixed
+
+## Task 6
+
+Only the numbered task.
+Mention Task 6b, Task 6B, Task 6c, Task 6d, and Task 60 without switching sections.
+
+```
+## Task 6b: fenced example
+```
+
+## task 6b: not a heading
+
+Still the numbered task.
+
+## Task 6b: Suffixed sibling
+
+Only the suffixed sibling.
+
+## Task 6B: Uppercase sibling
+
+Only the uppercase sibling.
+
+## Task 6c - Other letter sibling
+
+Only the other letter sibling.
+
+### Task 6d: Deeper heading
+
+Only the deeper heading.
+
+## Task 60: Longer number
+
+Only the longer number.
+
+## Task 7: Following task
+
+Only the following task.
+PLAN
+
+    local briefs="$TEST_ROOT/briefs"
+    mkdir -p "$briefs"
+
+    cat > "$briefs/expect-6.md" <<'EOF'
+## Task 6
+
+Only the numbered task.
+Mention Task 6b, Task 6B, Task 6c, Task 6d, and Task 60 without switching sections.
+
+```
+## Task 6b: fenced example
+```
+
+## task 6b: not a heading
+
+Still the numbered task.
+
+EOF
+    cat > "$briefs/expect-lower-b.md" <<'EOF'
+## Task 6b: Suffixed sibling
+
+Only the suffixed sibling.
+
+EOF
+    cat > "$briefs/expect-upper-b.md" <<'EOF'
+## Task 6B: Uppercase sibling
+
+Only the uppercase sibling.
+
+EOF
+    cat > "$briefs/expect-6c.md" <<'EOF'
+## Task 6c - Other letter sibling
+
+Only the other letter sibling.
+
+EOF
+    cat > "$briefs/expect-6d.md" <<'EOF'
+### Task 6d: Deeper heading
+
+Only the deeper heading.
+
+EOF
+    cat > "$briefs/expect-60.md" <<'EOF'
+## Task 60: Longer number
+
+Only the longer number.
+
+EOF
+    cat > "$briefs/expect-7.md" <<'EOF'
+## Task 7: Following task
+
+Only the following task.
+EOF
+
+    assert_exact_brief \
+        "requesting task 6 returns only that task" \
+        "$repo" suffixed.md 6 "$briefs/got-6.md" "$briefs/expect-6.md"
+    assert_exact_brief \
+        "requesting task 6b returns only that sibling" \
+        "$repo" suffixed.md 6b "$briefs/got-lower-b.md" "$briefs/expect-lower-b.md"
+    assert_exact_brief \
+        "requesting task 6B returns only the uppercase sibling" \
+        "$repo" suffixed.md 6B "$briefs/got-upper-b.md" "$briefs/expect-upper-b.md"
+    assert_exact_brief \
+        "requesting task 6c returns only that letter sibling" \
+        "$repo" suffixed.md 6c "$briefs/got-6c.md" "$briefs/expect-6c.md"
+    assert_exact_brief \
+        "requesting task 6d returns only the deeper heading" \
+        "$repo" suffixed.md 6d "$briefs/got-6d.md" "$briefs/expect-6d.md"
+    assert_exact_brief \
+        "requesting task 60 returns only the longer number" \
+        "$repo" suffixed.md 60 "$briefs/got-60.md" "$briefs/expect-60.md"
+    assert_exact_brief \
+        "requesting task 7 returns only the following task" \
+        "$repo" suffixed.md 7 "$briefs/got-7.md" "$briefs/expect-7.md"
 
     echo ""
     if [[ "$FAILURES" -ne 0 ]]; then
