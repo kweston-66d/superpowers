@@ -173,6 +173,16 @@ PLAN
         echo "    ledger:"; sed 's/^/      /' "$ledger" 2>/dev/null || echo "      (missing)"
     fi
 
+    # A pass line without a tests line is not a pass/fail summary. The ledger
+    # keeps the last non-blank output line.
+    out="$(cd "$repo" && "$EP_SCRIPTS/task-done" plan.md 7 "$head" -- sh -c 'printf "TAP version 13\n1..4\n# pass 4\n# duration_ms 52.464833\n"')"
+    if grep -q "Task 7: complete .* → # duration_ms 52.464833)" "$ledger"; then
+        pass "task-done keeps the last output line when the TAP test count is absent"
+    else
+        fail "task-done keeps the last output line when the TAP test count is absent"
+        echo "    ledger:"; sed 's/^/      /' "$ledger" 2>/dev/null || echo "      (missing)"
+    fi
+
     echo
     if [[ "$FAILURES" -eq 0 ]]; then
         echo "PASS"
