@@ -11,7 +11,7 @@ the parent with the block below, after the prose, with nothing after it.
 ```text
 evaluation:
 review_rounds: 2
-blockers: 0
+blockers: 1
 advisories: 0
 claims_checked: 3
 claims_refuted: 0
@@ -27,16 +27,20 @@ new return carries the new integer.
 
 ## 2 — Where each integer comes from
 
-Take the counts from the latest `falsifying-review` verdict JSON
-(`verdict-shapes.md`) and from your own mutation gate. Do not sum them across rounds.
+Take the counts from the `falsifying-review` verdict JSONs this ticket received
+(`verdict-shapes.md`) and from your own mutation gate. Findings are counted across every
+round, so a second round is never reported with zero blockers. Claims are counted from the
+latest verdict only.
 
-- **review_rounds** — the round number recorded on the PR for that verdict
+- **review_rounds** — the round number recorded on the PR for the latest verdict
   (`review-gate.md` §1d), including a `changes-requested` round. Omit until a verdict exists.
-- **blockers** — the verdict's `blockingFindings` on `changes-requested`. On `approve`, `0`.
-  Omit until a verdict exists. Merge consent is not a blocker and does not appear in this block.
-- **advisories** — how many entries are in that verdict's `advisory` array. An empty array is
-  `0`. Omit until a verdict exists.
-- **claims_checked** — how many entries are in that verdict's `claimsVerified`.
+- **blockers** — the sum of `blockingFindings` over every `changes-requested` verdict for this
+  PR. `0` when every verdict was `approve`. Omit until a verdict exists. Merge consent is not a
+  blocker and does not appear in this block.
+- **advisories** — how many distinct advisory findings the reviewer raised across all rounds.
+  An advisory repeated in a later round counts once. `0` when every `advisory` array was
+  empty. Omit until a verdict exists.
+- **claims_checked** — how many entries are in the latest verdict's `claimsVerified`.
 - **claims_refuted** — how many of those entries have `result` `refuted`. Emit this with
   `claims_checked`, including when the refuted count is `0`. Omit both until a verdict exists.
 - **mutation_limbs** and **mutation_survivors** — the raw counts from your mutation gate

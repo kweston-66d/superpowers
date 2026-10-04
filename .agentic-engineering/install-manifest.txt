@@ -51,6 +51,6 @@ c36727b79563d462e8113c3073e2bc81	/Users/kyle/projects/superpowers/.agents/skills
 063c9ebe14cd69c6eb43545c5a5b0812	/Users/kyle/projects/superpowers/.git/hooks/pre-commit
 dd3bef33fad800e42159c7a8a3303202	/Users/kyle/projects/superpowers/.agents/skills/orchestrated-delivery/SKILL.md
 c79f87aa9839ca50b2c178d44a835c25	/Users/kyle/projects/superpowers/.agents/skills/orchestrated-delivery/procedures/dispatch-handback.md
-c3185429d1fe3a4f0d4011921910cc39	/Users/kyle/projects/superpowers/.agents/skills/orchestrated-delivery/procedures/evaluation-return.md
 1bdccc116086ba05394dfc311e4b890e	/Users/kyle/projects/superpowers/.agents/skills/orchestrated-delivery/procedures/review-gate.md
 beb7132d410ac65a19a88f5883d7da78	/Users/kyle/projects/superpowers/.agents/skills/orchestrated-delivery/scripts/run-expected-failure.py
+57cfa0b7b2b6f28102395bc823916c08	/Users/kyle/projects/superpowers/.agents/skills/orchestrated-delivery/procedures/evaluation-return.md
