@@ -128,19 +128,23 @@ PLAN
     fi
 
     # --- task-done: Node TAP summary, not duration_ms ---
-    # A passing node --test log ends on # duration_ms. The ledger must record
-    # pass/tests counts (e.g. 4/4 pass) so a later reader can trust the result.
-    out="$(cd "$repo" && "$EP_SCRIPTS/task-done" plan.md 3 "$head" -- sh -c 'printf "TAP version 13\nok 1 - a\nok 2 - b\n1..4\n# tests 4\n# suites 0\n# pass 4\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 52.464833\n"')"
-    if grep -q "Task 3: complete .* → 4/4 pass)" "$ledger"; then
-        pass "task-done records the TAP pass summary rather than the trailing duration line"
+    # A node --test log ends on # duration_ms. Record pass/tests as N/M pass.
+    # The counts differ, and skips mean pass is not tests minus fail, so a
+    # swapped ratio or a derived pass count is a different ledger result.
+    out="$(cd "$repo" && "$EP_SCRIPTS/task-done" plan.md 3 "$head" -- sh -c 'printf "TAP version 13\nok 1 - a\nnot ok 2 - b\n1..10\n# tests 10\n# suites 0\n# pass 6\n# fail 3\n# cancelled 0\n# skipped 1\n# todo 0\n# duration_ms 52.464833\n"')"
+    local task3 result
+    task3="$(grep -F "Task 3: complete" "$ledger" 2>/dev/null || true)"
+    result="${task3##*→ }"
+    if [[ "$result" == "6/10 pass)" ]]; then
+        pass "task-done records the TAP pass count over the test count"
     else
-        fail "task-done records the TAP pass summary rather than the trailing duration line"
+        fail "task-done records the TAP pass count over the test count"
         echo "    ledger:"; sed 's/^/      /' "$ledger" 2>/dev/null || echo "      (missing)"
     fi
-    if ! grep -o '→ [^)]*)$' "$ledger" | grep -q 'duration_ms'; then
-        pass "task-done keeps the duration line out of the ledger result"
+    if [[ -n "$task3" && "$result" != *"duration_ms"* ]]; then
+        pass "task-done keeps the duration line out of the TAP ledger result"
     else
-        fail "task-done keeps the duration line out of the ledger result"
+        fail "task-done keeps the duration line out of the TAP ledger result"
         echo "    ledger:"; sed 's/^/      /' "$ledger" 2>/dev/null || echo "      (missing)"
     fi
 
@@ -174,6 +178,74 @@ PLAN
         pass "task-done does not record a failing TAP run as complete"
     else
         fail "task-done does not record a failing TAP run as complete"
+    fi
+
+    # An earlier summary block must not beat the final Node footer.
+    out="$(cd "$repo" && "$EP_SCRIPTS/task-done" plan.md 7 "$head" -- sh -c 'printf "TAP version 13\n# tests 2\n# pass 2\n# fail 0\nok 1 - child\n# tests 10\n# pass 6\n# fail 3\n# skipped 1\n# duration_ms 9.5\n"')"
+    if grep -q "Task 7: complete .* → 6/10 pass)" "$ledger"; then
+        pass "task-done records the final TAP pass summary when an earlier one exists"
+    else
+        fail "task-done records the final TAP pass summary when an earlier one exists"
+        echo "    ledger:"; sed 's/^/      /' "$ledger" 2>/dev/null || echo "      (missing)"
+    fi
+
+    # Differently cased comment keys are not the Node summary footer.
+    out="$(cd "$repo" && "$EP_SCRIPTS/task-done" plan.md 8 "$head" -- sh -c 'printf "TAP version 13\n# tests 10\n# pass 6\n# fail 3\n# skipped 1\n# Tests 4\n# Pass 4\n# duration_ms 9.5\n"')"
+    if grep -q "Task 8: complete .* → 6/10 pass)" "$ledger"; then
+        pass "task-done ignores differently cased TAP keys after the summary"
+    else
+        fail "task-done ignores differently cased TAP keys after the summary"
+        echo "    ledger:"; sed 's/^/      /' "$ledger" 2>/dev/null || echo "      (missing)"
+    fi
+
+    # A longer key that starts with pass is not the pass count.
+    out="$(cd "$repo" && "$EP_SCRIPTS/task-done" plan.md 9 "$head" -- sh -c 'printf "TAP version 13\n# tests 10\n# pass 6\n# fail 3\n# passed 4\n# duration_ms 9.5\n"')"
+    if grep -q "Task 9: complete .* → 6/10 pass)" "$ledger"; then
+        pass "task-done ignores a longer pass key after the TAP pass count"
+    else
+        fail "task-done ignores a longer pass key after the TAP pass count"
+        echo "    ledger:"; sed 's/^/      /' "$ledger" 2>/dev/null || echo "      (missing)"
+    fi
+
+    # Zero is a real pass count. The duration line must not replace it.
+    out="$(cd "$repo" && "$EP_SCRIPTS/task-done" plan.md 10 "$head" -- sh -c 'printf "TAP version 13\nnot ok 1 - a\n1..5\n# tests 5\n# pass 0\n# fail 5\n# duration_ms 1.5\n"')"
+    if grep -q "Task 10: complete .* → 0/5 pass)" "$ledger"; then
+        pass "task-done records a zero TAP pass count instead of the duration line"
+    else
+        fail "task-done records a zero TAP pass count instead of the duration line"
+        echo "    ledger:"; sed 's/^/      /' "$ledger" 2>/dev/null || echo "      (missing)"
+    fi
+
+    # Exit status gates completion even when the TAP footer says every test passed.
+    rc=0
+    out="$(cd "$repo" && "$EP_SCRIPTS/task-done" plan.md 11 "$head" -- sh -c 'printf "TAP version 13\nok 1 - a\n1..4\n# tests 4\n# pass 4\n# fail 0\n# duration_ms 1.2\n"; exit 1' 2>&1)" || rc=$?
+    if [[ "$rc" -ne 0 ]]; then
+        pass "task-done exits non-zero when a green TAP log comes from a failing command"
+    else
+        fail "task-done exits non-zero when a green TAP log comes from a failing command"
+    fi
+    if ! grep -q "Task 11: complete" "$ledger"; then
+        pass "task-done does not record a failing command whose TAP footer is all pass"
+    else
+        fail "task-done does not record a failing command whose TAP footer is all pass"
+    fi
+
+    # Words that look like counts, without a TAP comment key, stay ordinary output.
+    out="$(cd "$repo" && "$EP_SCRIPTS/task-done" plan.md 12 "$head" -- sh -c 'printf "tests 10\npass 6\nOK\n"')"
+    if grep -q "Task 12: complete .* → OK)" "$ledger"; then
+        pass "task-done keeps the last output line when pass and tests are not TAP keys"
+    else
+        fail "task-done keeps the last output line when pass and tests are not TAP keys"
+        echo "    ledger:"; sed 's/^/      /' "$ledger" 2>/dev/null || echo "      (missing)"
+    fi
+
+    # The generic fallback is the last non-blank line, not a trailing blank.
+    out="$(cd "$repo" && "$EP_SCRIPTS/task-done" plan.md 13 "$head" -- sh -c 'printf "suite finished\n\n\n"')"
+    if grep -q "Task 13: complete .* → suite finished)" "$ledger"; then
+        pass "task-done records the last non-blank line when the log ends with blanks"
+    else
+        fail "task-done records the last non-blank line when the log ends with blanks"
+        echo "    ledger:"; sed 's/^/      /' "$ledger" 2>/dev/null || echo "      (missing)"
     fi
 
     echo
