@@ -1,5 +1,5 @@
 /**
- * Inserted screen HTML must round-trip through wrapInFrame with its dollar sequences intact.
+ * Keep author screen HTML literal when wrapInFrame inserts it into the frame.
  */
 
 const assert = require('assert');
@@ -24,6 +24,9 @@ function test(name, fn) {
 }
 
 function countOccurrences(haystack, needle) {
+  if (needle.length === 0) {
+    throw new Error('needle must not be empty');
+  }
   let count = 0;
   let from = 0;
   while (from <= haystack.length) {
@@ -35,10 +38,7 @@ function countOccurrences(haystack, needle) {
   return count;
 }
 
-console.log('\n--- wrapInFrame screen HTML ---');
-
-test('screen html with replacement dollar sequences round-trips through wrapInFrame', () => {
-  const screen = "<p>costs $' today</p><p>$$</p><p>$&</p><p>$`</p><p>$1</p><p>$<name></p>";
+function assertScreenInsertedLiterally(screen) {
   const framed = wrapInFrame(screen);
   const open = '<div id="frame-content">';
   const openAt = framed.indexOf(open);
@@ -49,15 +49,55 @@ test('screen html with replacement dollar sequences round-trips through wrapInFr
     1,
     'screen html must appear once, with dollar sequences left literal'
   );
+  const screenAt = framed.indexOf(screen);
   assert.ok(
-    framed.indexOf(screen) > openAt,
+    screenAt > openAt,
     'screen html is inserted inside the frame content container'
+  );
+  const closeAt = framed.indexOf('</div>', screenAt);
+  assert.ok(
+    closeAt > screenAt,
+    'screen html sits before the content container closes'
   );
   assert.strictEqual(
     framed.includes('<!-- CONTENT -->'),
     false,
-    'content placeholder is consumed by the inserted screen'
+    'content placeholder is consumed and not written back into the screen'
+  );
+  return framed;
+}
+
+console.log('\n--- wrapInFrame screen HTML ---');
+
+test('dollar-quote in screen html round-trips through wrapInFrame', () => {
+  const screen = "<p>costs $' today</p>";
+  const framed = assertScreenInsertedLiterally(screen);
+  assert.strictEqual(
+    countOccurrences(framed, '</html>'),
+    1,
+    'dollar-quote must not splice the frame tail into the screen'
   );
 });
 
-if (failed > 0) process.exit(1);
+test('doubled dollar in screen html stays two dollar signs', () => {
+  const screen = '<p>price $$ today</p>';
+  assertScreenInsertedLiterally(screen);
+});
+
+test('dollar-ampersand in screen html is not replaced by the content placeholder', () => {
+  const screen = '<p>match $& here</p>';
+  assertScreenInsertedLiterally(screen);
+});
+
+test('dollar-backtick in screen html is not replaced by the frame head', () => {
+  const screen = '<p>prefix $` here</p>';
+  const framed = assertScreenInsertedLiterally(screen);
+  assert.strictEqual(
+    countOccurrences(framed, '<!DOCTYPE html>'),
+    1,
+    'dollar-backtick must not splice the frame head into the screen'
+  );
+});
+
+console.log(`\n--- Results: ${passed} passed, ${failed} failed ---`);
+if (passed === 0 || failed > 0) process.exit(1);
