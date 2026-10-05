@@ -212,8 +212,9 @@ async function runTests() {
     });
 
     await test('preserves dollar-quote and other $ tokens in wrapped screen HTML', async () => {
-      // User-visible: screen markup with $' / $& / $` / $$ / $1 must round-trip
-      // through wrapInFrame without String.replace substitution corruption.
+      // User-visible live path: screen markup with $' / $& / $` / $$ / $1 must
+      // round-trip through wrapInFrame without String.replace substitution.
+      // Unit coverage lives in wrap-frame.test.js; this pins the HTTP serve path.
       const marker = "price $'99' and $& match $` back $$ dollar $1 group";
       const fragment = `<h2>${marker}</h2><p>before$'after</p>`;
       fs.writeFileSync(path.join(CONTENT_DIR, 'dollar-tokens.html'), fragment);
@@ -223,6 +224,11 @@ async function runTests() {
       assert(res.body.includes(marker), 'Dollar tokens in screen HTML must remain literal');
       assert(res.body.includes("before$'after"), "$' must not swallow the suffix via replace patterns");
       assert(!res.body.includes('<!-- CONTENT -->'), 'Placeholder should still be replaced');
+      assert.strictEqual(
+        (res.body.match(/<!DOCTYPE html>/gi) || []).length,
+        1,
+        'dollar-backtick must not splice a second document head into the served page'
+      );
     });
 
     await test('serves newest file by mtime', async () => {
