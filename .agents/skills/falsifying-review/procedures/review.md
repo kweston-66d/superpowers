@@ -48,9 +48,14 @@ its file.
      ticket could carry it. A general "more tests would be good" stays advisory.
 
      **Establish this by deleting, not by describing.** Break the guard and re-run — one
-     limb at a time, against the **full** suite, never a scoped subset — and name the
-     specific test that goes red for each. A limb with no failing test is unenforced, and
-     that is the blocker. Mutate at the finest resolution the invariant has: proving a
+     limb at a time — and name the specific test that goes red for each. The run for a
+     limb is every test that loads the mutated file. When `test_command` is several
+     programs joined together, that is the program that executes the file. Within one
+     program, it is the test file or module that imports the mutated symbol, including
+     its sibling tests. A single test name is not that run. If you cannot tell which
+     tests load the file, run `test_command`. Bookend the sweep with `test_command` once
+     in the throwaway worktree before the first mutant and once after the last restore.
+     A limb with no failing test is unenforced, and that is the blocker. Mutate at the finest resolution the invariant has: proving a
      lookup *table* is validated while each of its individual entries can be moved with the
      suite byte-identical is the same defect one level up. Try the shapes a future edit
      would actually take, from `docs/agent_invariants.md` → Mutation shapes — including a

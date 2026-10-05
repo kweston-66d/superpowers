@@ -60,7 +60,6 @@ Only log a lesson that clears all four:
 
 Before appending, grep **Pending** and `.agentic-engineering/lessons/INDEX.md` for the entry's target
 file and its root-cause nouns.
-<!-- lesson: repeat-addendum-preserves-applied-shape -->
 A near-hit in **Pending** gets a dated addendum instead of a new entry. If the matching
 lesson is already **Applied**, append the concise second-instance note to its single body
 line and regenerate `INDEX.md`; never add a second body line. A repeat raises priority; it
@@ -79,9 +78,10 @@ freshness only — it does not answer did-it-land; grep the slug's anchor for th
 
 2. **Verify each Pending entry against current state.** Index first, eyes second: look
    the entry's slug and target file up in `.agentic-engineering/lessons/INDEX.md`, and grep
-   `grep -rn "lesson: <slug>" AGENTS.md agents/ .agents/skills/ skills/` for the anchor. Index
-   hit → the lesson is applied; check the anchored rule still says what the entry
-   claims and move on. Anchor absent from its indexed file → drift: re-verify against
+   `grep -rn "lesson: <slug>" AGENTS.md agents/ .agents/skills/ skills/` for the anchor in
+   that file's trailing `## Lesson anchors` list. Index hit → the lesson is applied;
+   check the rule in that file still says what the entry claims and move on. Anchor
+   absent from its indexed file → drift: re-verify against
    the file by hand and note the drift flag in the run-record. Neither → read the
    target file as before (the residual case: a rule applied before anchors existed, or
    reworded past recognition). If already fixed, move the entry straight to **Applied**
@@ -118,9 +118,10 @@ freshness only — it does not answer did-it-land; grep the slug's anchor for th
 
 5. **Apply approved edits**, then move the entry to **Applied** with a one-line summary.
    Move rejected entries to **Declined** with the user's stated reason, verbatim if given.
-   Every applied hunk inserts its anchor on the line above the rule:
-   `<!-- lesson: <slug> -->` (multi-hunk: `<slug>-2`, `-3`). The post-write
-   verification extends to: anchor present, frontmatter still single-line. After the
+   Every applied hunk appends one line to the `## Lesson anchors` list at the end of
+   the edited file: `<!-- lesson: <slug> -->` (multi-hunk: `<slug>-2`, `-3`). Create
+   that section when it is missing. Leave the rule prose unmarked. The post-write
+   verification extends to: anchor present in that list, frontmatter still single-line. After the
    round's edits, regenerate the index
    (`python3 .agents/skills/improving-harness-metalearn/scripts/regen_index.py`) so the
    applied lessons are findable next round.
@@ -244,3 +245,7 @@ Edits land uncommitted in the working tree, alongside the user's other `.claude/
 Do not commit or open a PR unless asked. `agents/*.md (thin shells) and AGENTS.md` frequently carries uncommitted
 hand edits — never revert or overwrite them; merge around them. When you do commit, stage
 explicit paths only — never `git add -A`, and never anything in `secrets_files`.
+
+## Lesson anchors
+
+<!-- lesson: repeat-addendum-preserves-applied-shape -->

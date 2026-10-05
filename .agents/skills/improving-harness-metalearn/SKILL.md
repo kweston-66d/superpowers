@@ -20,8 +20,9 @@ routed through improve-agents. One meta level, terminating.
 
 ## Representation you maintain
 
-- **Anchors:** every applied rule carries `<!-- lesson: <slug> -->` on the line above
-  it (multi-hunk: `<slug>-2`, `-3`). "Already applied?" is
+- **Anchors:** each applied hunk is one full line in the edited file's trailing
+  `## Lesson anchors` list: `<!-- lesson: <slug> -->` (multi-hunk: `<slug>-2`, `-3`).
+  That list is the only place the comment goes; the rule stays unmarked. "Already applied?" is
   `grep -rn "lesson: <slug>" AGENTS.md agents/ .agents/skills/ skills/`.
   Digit-suffixed hunks (`<slug>-2`, `-3`) count toward the base lesson's anchor total
   in the index; the Applied entry itself is always the bare slug — never suffix an

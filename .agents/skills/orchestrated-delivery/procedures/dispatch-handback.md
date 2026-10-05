@@ -66,9 +66,11 @@ here. Every reference out of this file names its file.
    misclassified refactor only costs a sweep. A ticket that reads as cleanup can still establish
    a guard — classify by the shape of what it enforces, not by how the work sounds.
 
-   **Mutation gates cover production code and key functionality only.** The per-limb,
-   full-suite sweep is priced for production code and anything reaching the product's
-   deliverable or user-facing output. Eval tooling, scripts and experimental code get
+   **Mutation gates cover production code and key functionality only.** The per-limb
+   sweep is priced for production code and anything reaching the product's
+   deliverable or user-facing output. Each limb runs the tests that load the mutated
+   file, with `test_command` once before the first mutant and once after the last
+   restore (coordinator-review-gate.md §2.4). Eval tooling, scripts and experimental code get
    proportionate coverage instead: the suite must pass, but tests are not individually
    mutation-proven, and fencing prose constants is explicitly not wanted. Each test added is a
    probe the review must run, so test count is a review-latency decision, not only a coverage

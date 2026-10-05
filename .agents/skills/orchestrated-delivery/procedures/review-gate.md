@@ -252,7 +252,7 @@ the skip is said in the gate evidence (§2.5) rather than left silent.
        gates bare or redirect to a scratchpad log and read that; check the gate's own exit
        status.
     4. **Mutation-gate the invariant, yourself, before merging.** For any ticket in the coordinator-dispatch-handback.md §2a
-       category, break the guard it introduces and re-run the **full** suite. At least one test
+       category, break the guard it introduces and re-run. At least one test
        must fail, and it must be a test that names the behaviour rather than the implementation
        detail. A green suite against deliberately broken code means the invariant is
        unenforced, and that is `changes-requested`, routed to step 1c — not a caveat in the verdict
@@ -274,8 +274,9 @@ the skip is said in the gate evidence (§2.5) rather than left silent.
        git worktree remove --force "<scratchpad>/mut-<n>-<sha7>"
        ```
        Hand **that** path to any agent that will modify files for the sweep, yourself
-       included. Run a baseline of the full suite there before the first mutant, so a red
-       result is a mutant's and not the tree's. The sweep's worktree holds nothing anyone
+       included. Run `test_command` once there before the first mutant, so a red
+       result is a mutant's and not the tree's. Run `test_command` once more after the
+       last restore. Between those two runs, each limb uses the probe below. The sweep's worktree holds nothing anyone
        needs, so removing it loses nothing; leaving it behind leaves a stale tree that the
        next orphan-prune has to account for.
 
@@ -293,6 +294,12 @@ the skip is said in the gate evidence (§2.5) rather than left silent.
        Rules:
        - **Run it yourself.** An implementer or test-writer reporting its own mutation is reporting on
          its own work; a decorative guard is caught by an independent re-run, not a self-report.
+       - **Probe each limb with every test that loads the mutated file.** When
+         `test_command` is several programs joined together, run the program that executes
+         that file. Within one program, run the test file or module that imports the mutated
+         symbol, including its sibling tests. A single test name is not a probe. If you
+         cannot tell which tests load the file, the probe is `test_command`. Name the probe
+         command and the assertion that went red.
        - **Mutate each limb separately** when a guard has more than one. A suite proving the
          arithmetic is right stays green if the branch that gates on it never consults the
          result — the original defect relocated one layer up.
@@ -316,21 +323,22 @@ the skip is said in the gate evidence (§2.5) rather than left silent.
          per-worktree, so it can apply another agent's snapshot). After each restore, verify
          per `docs/agent_invariants.md` → Restoration rule: a clean
          `git status --porcelain --ignore-submodules=all`, build and bytecode caches cleared,
-         and the baseline re-run green. Byte-identical files alone are not enough — a
+         and the probe command back to its pre-mutation counts. `test_command` is the
+         bookend, not the per-limb check. Byte-identical files alone are not enough — a
          same-size restore can leave a stale compiled cache that the next run loads instead
          of the source.
        - **Install the restore as a shell `trap ... EXIT` before applying the first mutation,
          and keep the per-iteration restore.** A harness whose restore sits at the end of a
          loop silently violates the restore rule the moment anything interrupts it — a tool
          timeout, a denial, a crash. The trap is the backstop, not the mechanism: time one
-         full-suite probe first and budget the probes so a batch fits one Bash call's
+         limb probe first and budget the probes so a batch fits one Bash call's
          timeout, and split across calls rather than raising the timeout by reflex. The
          per-iteration `cp` restore stays because it also carries the Restoration-rule
          verification.
        - **Run each expected-red mutant through
          `.agents/skills/orchestrated-delivery/scripts/run-expected-failure.py`.** Supply explicit
-         `--timeout`, `--max-output-bytes`, and `--output` values, followed by `--` and the full
-         test command. Its JSON result and exit status distinguish an expected failure (0), a
+         `--timeout`, `--max-output-bytes`, and `--output` values, followed by `--` and the
+         probe command for that limb. Its JSON result and exit status distinguish an expected failure (0), a
          surviving mutant (1), and a broken harness such as timeout or output overflow (2).
          Never recreate its error-trap or redirection logic inline.
        - Record the mutation results with **raw counts**, because "verified" ages badly and a

@@ -198,8 +198,10 @@ fix happens either way, it just does not hold the verdict hostage.
   restore each mutant by `cp` from a scratchpad copy rather than `git checkout --`, and
   never `git stash` (the stash stack is repo-wide, not per-worktree). Verify each restore
   against `git status --porcelain`, never against your own backup, then clear build and
-  bytecode caches and re-run the baseline — byte-identical files are necessary, not
-  sufficient.
+  bytecode caches and re-run the probe that loads the mutated file — it must return to
+  its pre-mutation counts. `test_command` runs once before the first mutant and once
+  after the last restore (`procedures/review.md`). Byte-identical files are necessary,
+  not sufficient.
 - The reviewer never edits code. It only reports.
 - The reviewer must cite a file path and line number for every `blocker` or `major`
   finding. If you can't cite a line, you can't flag it.

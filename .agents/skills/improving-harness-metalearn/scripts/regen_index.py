@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """Regenerate the applied-lessons index from anchor comments.
 
+Anchors are full-line `<!-- lesson: slug -->` comments kept in each
+instruction file's trailing Lesson anchors list.
+
 Truth flows one way: anchors in the instruction files and compressed
 Applied entries in the queue are the sources; INDEX.md is derived. Never
 edit the index by hand — rerun this script.
