@@ -129,7 +129,10 @@ PLAN
     echo "    got: $brief_path"
   fi
 
-  # --- numbered task brief stops before a letter-suffixed sibling ---
+  # --- numbered task brief stops at a non-alphanumeric id boundary ---
+  # Fixture pins both limbs of ([^0-9A-Za-z]|$): a longer numeric id (60) and
+  # letter suffixes in both cases (6b / 6B). Unique body lines make a vacuous
+  # "! grep" pass impossible if a sibling leaks in.
   cat >"$repo/plan-suffixed.md" <<'PLAN'
 # Plan with suffixed sibling
 
@@ -137,34 +140,71 @@ PLAN
 
 Numbered-only requirement text.
 
-## Task 6b: Letter-suffixed sibling
+## Task 6b: Lowercase letter-suffixed sibling
 
-Letter-suffixed-only requirement text.
+Lowercase-letter-suffixed-only requirement text.
+
+## Task 6B: Uppercase letter-suffixed sibling
+
+Uppercase-letter-suffixed-only requirement text.
+
+## Task 60: Longer numeric id
+
+Longer-numeric-id-only requirement text.
 
 ## Task 7: Later work
 
 Later requirement text.
 PLAN
-  local brief6 brief6b
-  (cd "$repo" && "$SDD_SCRIPTS/task-brief" plan-suffixed.md 6 >/dev/null)
-  (cd "$repo" && "$SDD_SCRIPTS/task-brief" plan-suffixed.md 6b >/dev/null)
-  brief6="$repo/.superpowers/sdd/plan-suffixed/task-6-brief.md"
-  brief6b="$repo/.superpowers/sdd/plan-suffixed/task-6b-brief.md"
+  # Explicit OUTFILEs for 6b vs 6B: default task-<N>-brief.md paths collide on
+  # case-insensitive filesystems, which would overwrite one sibling with the other.
+  local brief6 brief6b brief6B brief60
+  brief6="$TEST_ROOT/brief-numbered-6.md"
+  brief6b="$TEST_ROOT/brief-letter-lower-6b.md"
+  brief6B="$TEST_ROOT/brief-letter-upper-6B.md"
+  brief60="$TEST_ROOT/brief-numeric-60.md"
+  (cd "$repo" && "$SDD_SCRIPTS/task-brief" plan-suffixed.md 6 "$brief6" >/dev/null)
+  (cd "$repo" && "$SDD_SCRIPTS/task-brief" plan-suffixed.md 6b "$brief6b" >/dev/null)
+  (cd "$repo" && "$SDD_SCRIPTS/task-brief" plan-suffixed.md 6B "$brief6B" >/dev/null)
+  (cd "$repo" && "$SDD_SCRIPTS/task-brief" plan-suffixed.md 60 "$brief60" >/dev/null)
   if grep -q "Numbered-only requirement text." "$brief6" 2>/dev/null \
-    && ! grep -q "Letter-suffixed-only requirement text." "$brief6" 2>/dev/null \
-    && ! grep -q "^## Task 6b:" "$brief6" 2>/dev/null; then
-    pass "requesting a numbered task excludes its letter-suffixed sibling"
+    && ! grep -q "Lowercase-letter-suffixed-only requirement text." "$brief6" 2>/dev/null \
+    && ! grep -q "Uppercase-letter-suffixed-only requirement text." "$brief6" 2>/dev/null \
+    && ! grep -q "Longer-numeric-id-only requirement text." "$brief6" 2>/dev/null \
+    && ! grep -q "^## Task 6b:" "$brief6" 2>/dev/null \
+    && ! grep -q "^## Task 6B:" "$brief6" 2>/dev/null \
+    && ! grep -q "^## Task 60:" "$brief6" 2>/dev/null; then
+    pass "requesting a numbered task excludes alphanumeric-suffixed siblings"
   else
-    fail "requesting a numbered task excludes its letter-suffixed sibling"
+    fail "requesting a numbered task excludes alphanumeric-suffixed siblings"
     echo "    brief6: $(cat "$brief6" 2>/dev/null)"
   fi
-  if grep -q "Letter-suffixed-only requirement text." "$brief6b" 2>/dev/null \
+  if grep -q "Lowercase-letter-suffixed-only requirement text." "$brief6b" 2>/dev/null \
     && grep -q "^## Task 6b:" "$brief6b" 2>/dev/null \
-    && ! grep -q "Numbered-only requirement text." "$brief6b" 2>/dev/null; then
-    pass "requesting a letter-suffixed task returns that sibling"
+    && ! grep -q "Numbered-only requirement text." "$brief6b" 2>/dev/null \
+    && ! grep -q "Uppercase-letter-suffixed-only requirement text." "$brief6b" 2>/dev/null \
+    && ! grep -q "Longer-numeric-id-only requirement text." "$brief6b" 2>/dev/null; then
+    pass "requesting a lowercase letter-suffixed task returns that sibling"
   else
-    fail "requesting a letter-suffixed task returns that sibling"
+    fail "requesting a lowercase letter-suffixed task returns that sibling"
     echo "    brief6b: $(cat "$brief6b" 2>/dev/null)"
+  fi
+  if grep -q "Uppercase-letter-suffixed-only requirement text." "$brief6B" 2>/dev/null \
+    && grep -q "^## Task 6B:" "$brief6B" 2>/dev/null \
+    && ! grep -q "Numbered-only requirement text." "$brief6B" 2>/dev/null \
+    && ! grep -q "Lowercase-letter-suffixed-only requirement text." "$brief6B" 2>/dev/null; then
+    pass "requesting an uppercase letter-suffixed task returns that sibling"
+  else
+    fail "requesting an uppercase letter-suffixed task returns that sibling"
+    echo "    brief6B: $(cat "$brief6B" 2>/dev/null)"
+  fi
+  if grep -q "Longer-numeric-id-only requirement text." "$brief60" 2>/dev/null \
+    && grep -q "^## Task 60:" "$brief60" 2>/dev/null \
+    && ! grep -q "Numbered-only requirement text." "$brief60" 2>/dev/null; then
+    pass "requesting a longer numeric task id returns that task"
+  else
+    fail "requesting a longer numeric task id returns that task"
+    echo "    brief60: $(cat "$brief60" 2>/dev/null)"
   fi
 
   # --- review-package takes the plan first and lands in its directory ---
