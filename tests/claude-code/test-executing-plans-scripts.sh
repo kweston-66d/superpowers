@@ -127,6 +127,55 @@ PLAN
         echo "    got: $out"
     fi
 
+    # --- task-done: Node TAP summary, not duration_ms ---
+    # A passing node --test log ends on # duration_ms. The ledger must record
+    # pass/tests counts (e.g. 4/4 pass) so a later reader can trust the result.
+    out="$(cd "$repo" && "$EP_SCRIPTS/task-done" plan.md 3 "$head" -- sh -c 'printf "TAP version 13\nok 1 - a\nok 2 - b\n1..4\n# tests 4\n# suites 0\n# pass 4\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 52.464833\n"')"
+    if grep -q "Task 3: complete .* → 4/4 pass)" "$ledger"; then
+        pass "task-done records the TAP pass summary rather than the trailing duration line"
+    else
+        fail "task-done records the TAP pass summary rather than the trailing duration line"
+        echo "    ledger:"; sed 's/^/      /' "$ledger" 2>/dev/null || echo "      (missing)"
+    fi
+    if ! grep -o '→ [^)]*)$' "$ledger" | grep -q 'duration_ms'; then
+        pass "task-done keeps the duration line out of the ledger result"
+    else
+        fail "task-done keeps the duration line out of the ledger result"
+        echo "    ledger:"; sed 's/^/      /' "$ledger" 2>/dev/null || echo "      (missing)"
+    fi
+
+    # Non-TAP runners keep the last non-blank line (Task 1 already covers this with → OK).
+    # Incomplete TAP (missing # pass or # tests) also falls back to last non-blank.
+    out="$(cd "$repo" && "$EP_SCRIPTS/task-done" plan.md 4 "$head" -- sh -c 'printf "TAP version 13\n1..4\n# tests 4\n# duration_ms 52.464833\n"')"
+    if grep -q "Task 4: complete .* → # duration_ms 52.464833)" "$ledger"; then
+        pass "task-done keeps the last output line when the TAP pass count is absent"
+    else
+        fail "task-done keeps the last output line when the TAP pass count is absent"
+        echo "    ledger:"; sed 's/^/      /' "$ledger" 2>/dev/null || echo "      (missing)"
+    fi
+
+    out="$(cd "$repo" && "$EP_SCRIPTS/task-done" plan.md 5 "$head" -- sh -c 'printf "TAP version 13\n1..4\n# pass 4\n# duration_ms 52.464833\n"')"
+    if grep -q "Task 5: complete .* → # duration_ms 52.464833)" "$ledger"; then
+        pass "task-done keeps the last output line when the TAP test count is absent"
+    else
+        fail "task-done keeps the last output line when the TAP test count is absent"
+        echo "    ledger:"; sed 's/^/      /' "$ledger" 2>/dev/null || echo "      (missing)"
+    fi
+
+    # Failing TAP still records no completion (exit gate unchanged).
+    rc=0
+    out="$(cd "$repo" && "$EP_SCRIPTS/task-done" plan.md 6 "$head" -- sh -c 'printf "TAP version 13\nnot ok 1 - a\n1..1\n# tests 1\n# pass 0\n# fail 1\n# duration_ms 1.2\n"; exit 1' 2>&1)" || rc=$?
+    if [[ "$rc" -ne 0 ]]; then
+        pass "task-done exits non-zero when a TAP test command fails"
+    else
+        fail "task-done exits non-zero when a TAP test command fails"
+    fi
+    if ! grep -q "Task 6: complete" "$ledger"; then
+        pass "task-done does not record a failing TAP run as complete"
+    else
+        fail "task-done does not record a failing TAP run as complete"
+    fi
+
     echo
     if [[ "$FAILURES" -eq 0 ]]; then
         echo "PASS"

@@ -20,7 +20,10 @@ base=$3
 shift 4
 sdd="$(cd "$(dirname "$0")/../../subagent-driven-development/scripts" && pwd)"
 
-git rev-parse --verify --quiet "$base" >/dev/null || { echo "bad BASE: $base" >&2; exit 2; }
+git rev-parse --verify --quiet "$base" >/dev/null || {
+  echo "bad BASE: $base" >&2
+  exit 2
+}
 
 dir=$("$sdd/sdd-workspace" "$plan")
 log="$dir/task-${n}-tests.log"
@@ -37,7 +40,7 @@ done
 cmd=${cmd# }
 
 rc=0
-"$@" > "$log" 2>&1 || rc=$?
+"$@" >"$log" 2>&1 || rc=$?
 
 tail -n 5 "$log"
 if [ "$rc" -ne 0 ]; then
@@ -45,8 +48,19 @@ if [ "$rc" -ne 0 ]; then
   exit "$rc"
 fi
 
-last=$(grep -v '^[[:space:]]*$' "$log" | tail -n 1)
-[ -f "$ledger" ] || printf '# SDD ledger — plan: %s\n' "$plan" > "$ledger"
+# TAP summary counts are the pass/fail result. The duration line is not.
+# Without those counts, keep the last non-blank line.
+tap_count() {
+  sed -n "s/^#[[:space:]]*$1[[:space:]]\{1,\}\([0-9][0-9]*\)[[:space:]]*$/\1/p" "$log" | tail -n 1
+}
+total=$(tap_count tests)
+passed=$(tap_count pass)
+if [ -n "$total" ] && [ -n "$passed" ]; then
+  last="$passed/$total pass"
+else
+  last=$(grep -v '^[[:space:]]*$' "$log" | tail -n 1)
+fi
+[ -f "$ledger" ] || printf '# SDD ledger — plan: %s\n' "$plan" >"$ledger"
 line="Task $n: complete (commits $(git rev-parse --short=7 "$base")..$(git rev-parse --short=7 HEAD), tests: $cmd → $last)"
-printf '%s\n' "$line" >> "$ledger"
+printf '%s\n' "$line" >>"$ledger"
 echo "ledger: $line"
