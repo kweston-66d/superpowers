@@ -23,6 +23,27 @@ cleanup() {
     fi
 }
 
+# Compare the whole brief. A check for one line stays green when a later
+# sibling is appended beside it.
+assert_exact_brief() {
+    local label=$1
+    local repo_dir=$2
+    local plan=$3
+    local task_id=$4
+    local outfile=$5
+    local expected=$6
+    local rc=0
+
+    ( cd "$repo_dir" && "$SDD_SCRIPTS/task-brief" "$plan" "$task_id" "$outfile" >/dev/null ) || rc=$?
+    if [[ "$rc" -eq 0 ]] && cmp -s "$outfile" "$expected"; then
+        pass "$label"
+    else
+        fail "$label"
+        echo "    exit: $rc"
+        echo "    brief: $(cat "$outfile" 2>/dev/null)"
+    fi
+}
+
 main() {
     echo "=== Test: sdd-workspace ==="
 
@@ -349,6 +370,47 @@ PLAN
         echo "    dir:    $dir_out"
         echo "    marker: $(cat "$dir_out/plan-path" 2>/dev/null)"
     fi
+
+    # --- a numbered task stops before a letter-suffixed sibling ---
+    cat > "$repo/plan-suffix.md" <<'PLAN'
+# Suffix plan
+
+## Task 6: Numbered work
+
+Numbered-task body only.
+Mention Task 6b in prose without switching sections.
+
+## Task 6b: Suffixed sibling
+
+Suffixed-sibling body only.
+
+## Task 7: Later numbered work
+
+Later-numbered body only.
+PLAN
+
+    local briefs="$TEST_ROOT/briefs"
+    mkdir -p "$briefs"
+    cat > "$briefs/expect-6.md" <<'EOF'
+## Task 6: Numbered work
+
+Numbered-task body only.
+Mention Task 6b in prose without switching sections.
+
+EOF
+    cat > "$briefs/expect-6b.md" <<'EOF'
+## Task 6b: Suffixed sibling
+
+Suffixed-sibling body only.
+
+EOF
+
+    assert_exact_brief \
+        "requesting Task 6 excludes the letter-suffixed sibling" \
+        "$repo" plan-suffix.md 6 "$briefs/got-6.md" "$briefs/expect-6.md"
+    assert_exact_brief \
+        "requesting Task 6b returns that sibling brief" \
+        "$repo" plan-suffix.md 6b "$briefs/got-6b.md" "$briefs/expect-6b.md"
 
     echo ""
     if [[ "$FAILURES" -ne 0 ]]; then
