@@ -428,8 +428,8 @@ EOF
         "requesting Task 6B returns that sibling brief" \
         "$repo" plan-suffix.md 6B "$briefs/got-upper-b.md" "$briefs/expect-upper-b.md"
 
-    # The next heading is Task 6B. A class that still stops on "b" but not
-    # "B" would leave the lowercase plan green.
+    # Missing B already turns the lowercase plan red because Task 6B is
+    # classified as Task 6.
     cat > "$repo/plan-suffix-upper.md" <<'PLAN'
 # Upper suffix plan
 
@@ -457,8 +457,8 @@ EOF
         "requesting Task 6 excludes Task 6B" \
         "$repo" plan-suffix-upper.md 6 "$briefs/got-upper-6.md" "$briefs/expect-upper-6.md"
 
-    # The next heading is Task 6c. A class that only lists the letter b
-    # still stops before Task 6b and would leave that plan green.
+    # The 6c plan goes red when the class lists b and B but not another
+    # letter.
     cat > "$repo/plan-suffix-other.md" <<'PLAN'
 # Other letter plan
 
