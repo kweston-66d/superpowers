@@ -372,6 +372,9 @@ PLAN
     fi
 
     # --- a numbered task stops before a letter-suffixed sibling ---
+    # Task 6b is the next heading, so deleting the letter class pulls it in.
+    # Task 6B follows Task 6b, so a case-folded id match pulls the uppercase
+    # sibling into the Task 6b brief. Prose mentions stay in the parent task.
     cat > "$repo/plan-suffix.md" <<'PLAN'
 # Suffix plan
 
@@ -383,6 +386,10 @@ Mention Task 6b in prose without switching sections.
 ## Task 6b: Suffixed sibling
 
 Suffixed-sibling body only.
+
+## Task 6B: Uppercase sibling
+
+Uppercase-sibling body only.
 
 ## Task 7: Later numbered work
 
@@ -404,13 +411,89 @@ EOF
 Suffixed-sibling body only.
 
 EOF
+    cat > "$briefs/expect-upper-b.md" <<'EOF'
+## Task 6B: Uppercase sibling
+
+Uppercase-sibling body only.
+
+EOF
 
     assert_exact_brief \
-        "requesting Task 6 excludes the letter-suffixed sibling" \
+        "requesting Task 6 excludes Task 6b" \
         "$repo" plan-suffix.md 6 "$briefs/got-6.md" "$briefs/expect-6.md"
     assert_exact_brief \
         "requesting Task 6b returns that sibling brief" \
         "$repo" plan-suffix.md 6b "$briefs/got-6b.md" "$briefs/expect-6b.md"
+    assert_exact_brief \
+        "requesting Task 6B returns that sibling brief" \
+        "$repo" plan-suffix.md 6B "$briefs/got-upper-b.md" "$briefs/expect-upper-b.md"
+
+    # The next heading is Task 6B. A class that still stops on "b" but not
+    # "B" would leave the lowercase plan green.
+    cat > "$repo/plan-suffix-upper.md" <<'PLAN'
+# Upper suffix plan
+
+## Task 6: Numbered work
+
+Numbered-task body only.
+Mention Task 6B in prose without switching sections.
+
+## Task 6B: Uppercase sibling
+
+Uppercase-sibling body only.
+
+## Task 7: Later numbered work
+
+Later-numbered body only.
+PLAN
+    cat > "$briefs/expect-upper-6.md" <<'EOF'
+## Task 6: Numbered work
+
+Numbered-task body only.
+Mention Task 6B in prose without switching sections.
+
+EOF
+    assert_exact_brief \
+        "requesting Task 6 excludes Task 6B" \
+        "$repo" plan-suffix-upper.md 6 "$briefs/got-upper-6.md" "$briefs/expect-upper-6.md"
+
+    # The next heading is Task 6c. A class that only lists the letter b
+    # still stops before Task 6b and would leave that plan green.
+    cat > "$repo/plan-suffix-other.md" <<'PLAN'
+# Other letter plan
+
+## Task 6: Numbered work
+
+Numbered-task body only.
+Mention Task 6c in prose without switching sections.
+
+## Task 6c: Other letter sibling
+
+Other-letter body only.
+
+## Task 7: Later numbered work
+
+Later-numbered body only.
+PLAN
+    cat > "$briefs/expect-other-6.md" <<'EOF'
+## Task 6: Numbered work
+
+Numbered-task body only.
+Mention Task 6c in prose without switching sections.
+
+EOF
+    cat > "$briefs/expect-other-c.md" <<'EOF'
+## Task 6c: Other letter sibling
+
+Other-letter body only.
+
+EOF
+    assert_exact_brief \
+        "requesting Task 6 excludes Task 6c" \
+        "$repo" plan-suffix-other.md 6 "$briefs/got-other-6.md" "$briefs/expect-other-6.md"
+    assert_exact_brief \
+        "requesting Task 6c returns that sibling brief" \
+        "$repo" plan-suffix-other.md 6c "$briefs/got-other-c.md" "$briefs/expect-other-c.md"
 
     echo ""
     if [[ "$FAILURES" -ne 0 ]]; then
