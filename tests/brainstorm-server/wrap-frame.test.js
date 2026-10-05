@@ -3,9 +3,11 @@
  */
 
 const assert = require('assert');
+const fs = require('fs');
 const path = require('path');
 
 const SERVER = path.join(__dirname, '../../skills/brainstorming/scripts/server.cjs');
+const FRAME_TEMPLATE = path.join(__dirname, '../../skills/brainstorming/scripts/frame-template.html');
 const { wrapInFrame } = require(SERVER);
 
 let passed = 0;
@@ -38,12 +40,35 @@ function countOccurrences(haystack, needle) {
   return count;
 }
 
+function placeholderLineWith(screen) {
+  const template = fs.readFileSync(FRAME_TEMPLATE, 'utf8');
+  const placeholder = '<!-- CONTENT -->';
+  const at = template.indexOf(placeholder);
+  assert.strictEqual(
+    countOccurrences(template, placeholder),
+    1,
+    'frame template has one content placeholder'
+  );
+  const lineStart = template.lastIndexOf('\n', at) + 1;
+  const lineEnd = template.indexOf('\n', at);
+  const line = template.slice(lineStart, lineEnd);
+  const slot = line.indexOf(placeholder);
+  assert.notStrictEqual(slot, -1, 'content placeholder sits on its own template line');
+  return line.slice(0, slot) + screen + line.slice(slot + placeholder.length);
+}
+
 function assertScreenInsertedLiterally(screen) {
   const framed = wrapInFrame(screen);
+  const expectedLine = placeholderLineWith(screen);
   const open = '<div id="frame-content">';
   const openAt = framed.indexOf(open);
 
   assert.notStrictEqual(openAt, -1, 'framed screen keeps the content container');
+  assert.strictEqual(
+    countOccurrences(framed, expectedLine),
+    1,
+    'screen html occupies the content placeholder exactly once'
+  );
   assert.strictEqual(
     countOccurrences(framed, screen),
     1,
