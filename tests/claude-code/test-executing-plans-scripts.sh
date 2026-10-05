@@ -129,6 +129,7 @@ PLAN
   fi
 
   # --- task-done: Node TAP pass/fail summary, not the duration line ---
+  # Pass and test counts differ so swapping the two fields cannot still match.
   cat >"$repo/tap-pass.sh" <<'TAPSCRIPT'
 #!/bin/sh
 cat <<'TAP'
@@ -140,10 +141,10 @@ ok 1 - adds
   type: 'test'
   ...
 1..1
-# tests 4
+# tests 5
 # suites 0
-# pass 4
-# fail 0
+# pass 3
+# fail 2
 # cancelled 0
 # skipped 0
 # todo 0
@@ -151,12 +152,62 @@ ok 1 - adds
 TAP
 TAPSCRIPT
   out="$(cd "$repo" && "$EP_SCRIPTS/task-done" plan.md 3 "$base" -- sh tap-pass.sh)"
-  local tap_expected="Task 3: complete (commits ${base:0:7}..${head:0:7}, tests: sh tap-pass.sh → 4/4 pass)"
-  if [[ -f "$ledger" ]] && grep -qF "$tap_expected" "$ledger"; then
-    pass "task-done records the Node TAP pass/fail summary"
+  local tap_expected="Task 3: complete (commits ${base:0:7}..${head:0:7}, tests: sh tap-pass.sh → 3/5 pass)"
+  local tap_line
+  tap_line="$(grep -F "Task 3: complete" "$ledger" 2>/dev/null || true)"
+  if [[ "$tap_line" == "$tap_expected" ]]; then
+    pass "task-done records the Node TAP pass count over the test count"
   else
-    fail "task-done records the Node TAP pass/fail summary"
+    fail "task-done records the Node TAP pass count over the test count"
     echo "    expected: $tap_expected"
+    echo "    ledger:"
+    sed 's/^/      /' "$ledger" 2>/dev/null || echo "      (missing)"
+    echo "    got: $out"
+  fi
+
+  # A tests line without a pass line is not a pass/fail summary.
+  cat >"$repo/tap-tests-only.sh" <<'TAPSCRIPT'
+#!/bin/sh
+cat <<'TAP'
+TAP version 13
+# tests 5
+# fail 2
+# duration_ms 12.5
+TAP
+TAPSCRIPT
+  out="$(cd "$repo" && "$EP_SCRIPTS/task-done" plan.md 4 "$base" -- sh tap-tests-only.sh)"
+  local tests_only_expected="Task 4: complete (commits ${base:0:7}..${head:0:7}, tests: sh tap-tests-only.sh → # duration_ms 12.5)"
+  local tests_only_line
+  tests_only_line="$(grep -F "Task 4: complete" "$ledger" 2>/dev/null || true)"
+  if [[ "$tests_only_line" == "$tests_only_expected" ]]; then
+    pass "task-done keeps the last line when the TAP pass count is absent"
+  else
+    fail "task-done keeps the last line when the TAP pass count is absent"
+    echo "    expected: $tests_only_expected"
+    echo "    ledger:"
+    sed 's/^/      /' "$ledger" 2>/dev/null || echo "      (missing)"
+    echo "    got: $out"
+  fi
+
+  # A pass line without a tests line is not a pass/fail summary.
+  cat >"$repo/tap-pass-only.sh" <<'TAPSCRIPT'
+#!/bin/sh
+cat <<'TAP'
+TAP version 13
+# pass 3
+# fail 2
+# duration_ms 8.25
+TAP
+TAPSCRIPT
+  out="$(cd "$repo" && "$EP_SCRIPTS/task-done" plan.md 5 "$base" -- sh tap-pass-only.sh)"
+  local pass_only_expected="Task 5: complete (commits ${base:0:7}..${head:0:7}, tests: sh tap-pass-only.sh → # duration_ms 8.25)"
+  local pass_only_line
+  pass_only_line="$(grep -F "Task 5: complete" "$ledger" 2>/dev/null || true)"
+  if [[ "$pass_only_line" == "$pass_only_expected" ]]; then
+    pass "task-done keeps the last line when the TAP test count is absent"
+  else
+    fail "task-done keeps the last line when the TAP test count is absent"
+    echo "    expected: $pass_only_expected"
     echo "    ledger:"
     sed 's/^/      /' "$ledger" 2>/dev/null || echo "      (missing)"
     echo "    got: $out"
