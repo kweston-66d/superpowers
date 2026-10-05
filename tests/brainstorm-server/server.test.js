@@ -211,6 +211,20 @@ async function runTests() {
       assert(res.body.includes('data-choice="a"'), 'Fragment interactive elements intact');
     });
 
+    await test('preserves dollar-quote and other $ tokens in wrapped screen HTML', async () => {
+      // User-visible: screen markup with $' / $& / $` / $$ / $1 must round-trip
+      // through wrapInFrame without String.replace substitution corruption.
+      const marker = "price $'99' and $& match $` back $$ dollar $1 group";
+      const fragment = `<h2>${marker}</h2><p>before$'after</p>`;
+      fs.writeFileSync(path.join(CONTENT_DIR, 'dollar-tokens.html'), fragment);
+      await sleep(300);
+
+      const res = await fetch(`http://localhost:${TEST_PORT}/`);
+      assert(res.body.includes(marker), 'Dollar tokens in screen HTML must remain literal');
+      assert(res.body.includes("before$'after"), "$' must not swallow the suffix via replace patterns");
+      assert(!res.body.includes('<!-- CONTENT -->'), 'Placeholder should still be replaced');
+    });
+
     await test('serves newest file by mtime', async () => {
       fs.writeFileSync(path.join(CONTENT_DIR, 'older.html'), '<h2>Older</h2>');
       await sleep(100);
