@@ -261,7 +261,7 @@ function isFullDocument(html) {
 }
 
 function wrapInFrame(content) {
-  return renderBranding(frameTemplate).replace('<!-- CONTENT -->', content);
+  return renderBranding(frameTemplate).replace('<!-- CONTENT -->', () => content);
 }
 
 function getNewestScreen() {
@@ -718,6 +718,7 @@ module.exports = {
   encodeFrame,
   decodeFrame,
   browserLauncherForPlatform,
+  wrapInFrame,
   OPCODES,
   MAX_FRAME_PAYLOAD_BYTES
 };
